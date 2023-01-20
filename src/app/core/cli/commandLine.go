@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/blackshark537/dataprod/src/app/core/config"
 	"github.com/blackshark537/dataprod/src/app/core/entities"
 	portin "github.com/blackshark537/dataprod/src/app/core/port_in"
+	"github.com/blackshark537/dataprod/src/app/core/services"
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 )
@@ -18,6 +20,8 @@ var (
 	data       string
 	filter     string
 )
+
+var instance = color.MagentaString("[CLI]:")
 
 var Commands []*cli.Command = []*cli.Command{
 	{
@@ -125,19 +129,20 @@ func New() *cli.App {
 	AppDesc := color.MagentaString("A simple CLI program to manage your dataprod system")
 	return &cli.App{
 		Name:     AppName,
-		Version:  "v0.0.1",
+		Version:  "v" + config.VERSION,
 		Usage:    AppDesc,
 		Commands: Commands,
 	}
 }
 
 func serverStart(ctx *cli.Context) error {
+	fmt.Printf("%s Server Starting on port: %s\n", instance, port)
 	api := portin.ApiAdapter{}
 	return api.ForRoot(port)
 }
 
 func listTable(ctx *cli.Context) error {
-	println("List Collection:", collection)
+	fmt.Printf("%s List Colection: %s\n", instance, collection)
 	switch collection {
 	case "empresas":
 		empresa := entities.Empresa{}
@@ -147,19 +152,25 @@ func listTable(ctx *cli.Context) error {
 		lotes := entities.Lote{}
 		lotes.List(filter)
 		return nil
+	case "projection":
+		projection := services.Projection{}
+		projection.List(filter)
+		return nil
 	default:
 		return errors.New("Not a valid collection")
 	}
 }
 
 func insertIntoTable(ctx *cli.Context) error {
-	println("Insert Into Colection:", collection)
-	fmt.Println("Data: ", data)
+	fmt.Printf("%s Insert Into Colection: %s\n", instance, collection)
+	fmt.Printf("%s Data: %s\n", instance, data)
 	switch collection {
 	case "empresas":
-		empresa := entities.Empresa{}
-		json.Unmarshal([]byte(data), &empresa)
-		res, err := empresa.Save()
+		empresa := new(entities.Empresa)
+		gpoin := new(entities.Geopoint)
+		json.Unmarshal([]byte(data), empresa)
+		json.Unmarshal([]byte(data), gpoin)
+		res, err := empresa.Save(gpoin)
 		if err != nil {
 			return err
 		}
@@ -175,7 +186,7 @@ func insertIntoTable(ctx *cli.Context) error {
 }
 
 func deleteFromTable(ctx *cli.Context) error {
-	fmt.Println("Delete From Colection:", collection)
+	fmt.Printf("%s Delete From Colection: %s\n", instance, collection)
 	fmt.Println("_Id: ", objectId)
 	switch collection {
 	case "empresas":

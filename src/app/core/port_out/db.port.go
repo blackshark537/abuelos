@@ -23,6 +23,12 @@ func (a *DbAdapter) ForRoot() {
 	}
 }
 
+func (port *DbPort[t]) Count(filters string) (int64, error) {
+	mongodb.SetFilters(filters)
+	count, err := mongodb.Count()
+	return count, err
+}
+
 func (port *DbPort[t]) Save() (interface{}, error) {
 	mongodb.SelectTable(port.Name)
 	return mongodb.Create(port.Entity)
@@ -38,7 +44,7 @@ func (port *DbPort[t]) GetAll(filters string) ([]t, error) {
 	mongodb.SelectTable(port.Name)
 	mongodb.SetFilters(filters)
 	var results []t
-	cursor := mongodb.ReadAll()
+	cursor := mongodb.Find()
 	err := cursor.All(context.TODO(), &results)
 	return results, err
 }
@@ -46,7 +52,7 @@ func (port *DbPort[t]) GetAll(filters string) ([]t, error) {
 func (port *DbPort[t]) FindOne(filters string) error {
 	mongodb.SelectTable(port.Name)
 	mongodb.SetFilters(filters)
-	result := mongodb.Read()
+	result := mongodb.FindOne()
 	return result.Decode(&port.Entity)
 }
 

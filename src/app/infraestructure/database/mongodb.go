@@ -10,6 +10,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+
+	"github.com/fatih/color"
 )
 
 type MongoDb struct {
@@ -20,6 +22,7 @@ type MongoDb struct {
 }
 
 var ctx = context.TODO()
+var instance = color.MagentaString("[MongoDB]:")
 
 func (db *MongoDb) createClient() *mongo.Database {
 	clientOptions := options.Client().ApplyURI(db.Uri)
@@ -30,7 +33,7 @@ func (db *MongoDb) createClient() *mongo.Database {
 		panic(err)
 	}
 
-	fmt.Println("MongoDB Successfully connected")
+	fmt.Printf("%s Successfully connected\n", instance)
 	return client.Database(db.Name)
 }
 
@@ -38,6 +41,7 @@ func (db *MongoDb) SelectTable(table string) {
 	db.Filters = bson.M{}
 	client := db.createClient()
 	db.Collection = client.Collection(table)
+	fmt.Printf("%s Select Colection: %s\n", instance, color.GreenString(table))
 }
 
 func (db *MongoDb) SetFilters(f string) {
@@ -50,14 +54,24 @@ func (db MongoDb) Where(prop string, cond string, value any) {
 	}
 }
 
+func (db *MongoDb) Count() (int64, error) {
+	operation("Count")
+	db.isCollection()
+	count, err := db.Collection.CountDocuments(ctx, db.Filters)
+	defer db.close()
+	return count, err
+}
+
 func (db *MongoDb) Create(object interface{}) (*mongo.InsertOneResult, error) {
+	operation("Create")
 	db.isCollection()
 	result, err := db.Collection.InsertOne(ctx, object)
 	defer db.close()
 	return result, err
 }
 
-func (db *MongoDb) ReadAll() *mongo.Cursor {
+func (db *MongoDb) Find() *mongo.Cursor {
+	operation("FindAll")
 	db.isCollection()
 	cursor, err := db.Collection.Find(ctx, db.Filters)
 	handleErr(err)
@@ -65,13 +79,15 @@ func (db *MongoDb) ReadAll() *mongo.Cursor {
 	return cursor
 }
 
-func (db *MongoDb) Read() *mongo.SingleResult {
+func (db *MongoDb) FindOne() *mongo.SingleResult {
+	operation("FindOne")
 	db.isCollection()
 	defer db.close()
 	return db.Collection.FindOne(ctx, db.Filters)
 }
 
 func (db *MongoDb) UpdateById(id string, entity interface{}) *mongo.SingleResult {
+	operation("UpdateById")
 	objectId, err := primitive.ObjectIDFromHex(id)
 	handleErr(err)
 	db.isCollection()
@@ -80,6 +96,7 @@ func (db *MongoDb) UpdateById(id string, entity interface{}) *mongo.SingleResult
 }
 
 func (db *MongoDb) DeleteById(id string) *mongo.SingleResult {
+	operation("DeleteById")
 	objectId, err := primitive.ObjectIDFromHex(id)
 	handleErr(err)
 	db.isCollection()
@@ -89,14 +106,18 @@ func (db *MongoDb) DeleteById(id string) *mongo.SingleResult {
 
 func (db *MongoDb) isCollection() {
 	if db.Collection == nil {
-		panic("MongoDb Collection instance null")
+		panic(color.YellowString("[MongoDB]: Collection instance null"))
 	}
 }
 
 func (db *MongoDb) close() {
 	err := db.Collection.Database().Client().Disconnect(ctx)
 	handleErr(err)
-	fmt.Println("MongoDB Successfully disconnected")
+	fmt.Printf("%s Successfully disconnected\n", instance)
+}
+
+func operation(name string) {
+	fmt.Printf("%s Operation: %s\n", instance, name)
 }
 
 func handleErr(err error) {

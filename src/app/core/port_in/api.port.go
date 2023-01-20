@@ -1,14 +1,11 @@
 package portin
 
-import (
-	"errors"
-
-	"github.com/fatih/color"
-)
+import api "github.com/blackshark537/dataprod/src/app/Api"
 
 type ApiAdapter struct{}
 
 func (a *ApiAdapter) ForRoot(port string) error {
-	msg := color.RedString("Api Sever not available")
-	return errors.New(msg) //api.ForRoot(port)
+	//msg := color.RedString("Api Sever not available")
+	//return errors.New(msg)
+	return api.ForRoot(port)
 }
