@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/blackshark537/dataprod/src/app/core/config"
 	"github.com/blackshark537/dataprod/src/app/core/entities"
@@ -142,23 +143,30 @@ func serverStart(ctx *cli.Context) error {
 }
 
 func listTable(ctx *cli.Context) error {
+	sub := make(map[string]entities.EntityList)
+	sub["empresas"] = new(entities.Empresa)
+	sub["lotes"] = new(entities.Lote)
+	sub["projections"] = new(services.AbuelosProjection)
+	/* if sub[collection] == nil {
+		return noMatch()
+	} */
 	fmt.Printf("%s List Colection: %s\n", instance, collection)
-	switch collection {
-	case "empresas":
-		empresa := entities.Empresa{}
-		empresa.List(filter)
-		return nil
-	case "lotes":
-		lotes := entities.Lote{}
-		lotes.List(filter)
-		return nil
-	case "projection":
-		projection := services.Projection{}
-		projection.List(filter)
-		return nil
-	default:
-		return errors.New("Not a valid collection")
+	if collection == "projections" {
+		year := time.Now().Year()
+		filter = fmt.Sprintf("{'year': {'$gt': %d}}", year+2)
 	}
+	if collection == "projectable" {
+		year := time.Now().Year()
+		service := services.AbuelosProjection{}
+		service.Table(int64(year), "Aves")
+		return nil
+	}
+	List(sub[collection], filter)
+	return nil
+}
+
+func List(e entities.EntityList, filter string) {
+	e.List(filter)
 }
 
 func insertIntoTable(ctx *cli.Context) error {
@@ -181,19 +189,27 @@ func insertIntoTable(ctx *cli.Context) error {
 	case "alimentos":
 		return nil
 	default:
-		return errors.New("No valid collection")
+		return noMatch()
 	}
 }
 
 func deleteFromTable(ctx *cli.Context) error {
-	fmt.Printf("%s Delete From Colection: %s\n", instance, collection)
-	fmt.Println("_Id: ", objectId)
-	switch collection {
-	case "empresas":
-		empresa := entities.Empresa{}
-		return empresa.Delete(objectId)
-	default:
-		return errors.New("No collection matched")
+	sub := make(map[string]entities.EntityDelete)
+	sub["empresas"] = new(entities.Empresa)
+	sub["lotes"] = new(entities.Lote)
+	if sub[collection] == nil {
+		return noMatch()
 	}
 
+	fmt.Printf("%s Delete From Colection: %s\n", instance, collection)
+	fmt.Println("_Id: ", objectId)
+	return Delete(sub[collection], objectId)
+}
+
+func Delete(e entities.EntityDelete, id string) error {
+	return e.Delete(id)
+}
+
+func noMatch() error {
+	return errors.New("Sorry No collection matched!")
 }

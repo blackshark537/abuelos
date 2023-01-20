@@ -2,6 +2,7 @@ package entities
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	portout "github.com/blackshark537/dataprod/src/app/core/port_out"
@@ -92,6 +93,6 @@ func (e *Empresa) List(filter string) {
 
 func handleErr(err error) {
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }

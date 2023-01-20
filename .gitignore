@@ -2,3 +2,7 @@
 /bin
 /public
 /src/logs
+
+*.json
+*.js
+*.ts

@@ -3,7 +3,9 @@ package database
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -30,7 +32,7 @@ func (db *MongoDb) createClient() *mongo.Database {
 	handleErr(err)
 
 	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
-		panic(err)
+		handleErr(err)
 	}
 
 	fmt.Printf("%s Successfully connected\n", instance)
@@ -106,7 +108,7 @@ func (db *MongoDb) DeleteById(id string) *mongo.SingleResult {
 
 func (db *MongoDb) isCollection() {
 	if db.Collection == nil {
-		panic(color.YellowString("[MongoDB]: Collection instance null"))
+		handleErr(errors.New(color.YellowString("[MongoDB]: Collection instance null")))
 	}
 }
 
@@ -122,6 +124,6 @@ func operation(name string) {
 
 func handleErr(err error) {
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
