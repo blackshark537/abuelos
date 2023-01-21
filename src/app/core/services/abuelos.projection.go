@@ -107,7 +107,7 @@ func AbuelosTable(year string, dataType string, isProduccion bool) {
 }
 
 func ProjectAbuelos(filters string) []LoteProjection {
-	operation("LoteProjection")
+	defer bench("LoteProjection")
 	loteEntity := new(entities.Lote)
 	lotes, err := loteEntity.GetAll(filters)
 	if err != nil {
@@ -116,8 +116,20 @@ func ProjectAbuelos(filters string) []LoteProjection {
 	projection := []LoteProjection{}
 
 	for _, lote := range lotes {
-		recria := getAbuelosRecria(lote)
-		produccion := getAbuelosProduccion(recria[len(recria)-1])
+		recriaChan := make(chan []LoteProjection)
+		prodChan := make(chan []LoteProjection)
+		go func() {
+			rec := getAbuelosRecria(lote)
+			recriaChan <- rec
+		}()
+		var recria []LoteProjection = <-recriaChan
+		go func() {
+			prod := getAbuelosProduccion(recria[len(recria)-1])
+			prodChan <- prod
+		}()
+
+		var produccion []LoteProjection = <-prodChan
+
 		projection = append(projection, recria...)
 		projection = append(projection, produccion...)
 	}
@@ -281,7 +293,7 @@ func getAbuelosProduccion(lote LoteProjection) []LoteProjection {
 }
 
 func AbuelosProjectionTable(year string, dataType string, isProduccion bool) ([]string, [13][32]int64) {
-	operation("ProjectionTable")
+	defer bench("ProjectionTable")
 	if year == "" {
 		year = fmt.Sprintf("%d", time.Now().Year())
 	}
@@ -322,8 +334,8 @@ func AbuelosProjectionTable(year string, dataType string, isProduccion bool) ([]
 	return cols, rows
 }
 
-func operation(name string) {
-	fmt.Printf("%s Operation: %s\n", instance, name)
+func bench(name string) {
+	fmt.Printf("%s Operation: %s - %v\n", instance, name, time.Since(time.Now()))
 }
 
 func handleErr(err error) {

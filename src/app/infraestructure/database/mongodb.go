@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -57,7 +58,7 @@ func (db MongoDb) Where(prop string, cond string, value any) {
 }
 
 func (db *MongoDb) Count() (int64, error) {
-	operation("Count")
+	defer bench("Count")
 	db.isCollection()
 	count, err := db.Collection.CountDocuments(ctx, db.Filters)
 	defer db.close()
@@ -65,7 +66,7 @@ func (db *MongoDb) Count() (int64, error) {
 }
 
 func (db *MongoDb) Create(object interface{}) (*mongo.InsertOneResult, error) {
-	operation("Create")
+	defer bench("Create")
 	db.isCollection()
 	result, err := db.Collection.InsertOne(ctx, object)
 	defer db.close()
@@ -73,7 +74,7 @@ func (db *MongoDb) Create(object interface{}) (*mongo.InsertOneResult, error) {
 }
 
 func (db *MongoDb) Find() *mongo.Cursor {
-	operation("FindAll")
+	defer bench("FindAll")
 	db.isCollection()
 	cursor, err := db.Collection.Find(ctx, db.Filters)
 	handleErr(err)
@@ -82,14 +83,14 @@ func (db *MongoDb) Find() *mongo.Cursor {
 }
 
 func (db *MongoDb) FindOne() *mongo.SingleResult {
-	operation("FindOne")
+	defer bench("FindOne")
 	db.isCollection()
 	defer db.close()
 	return db.Collection.FindOne(ctx, db.Filters)
 }
 
 func (db *MongoDb) UpdateById(id string, entity interface{}) *mongo.SingleResult {
-	operation("UpdateById")
+	defer bench("UpdateById")
 	objectId, err := primitive.ObjectIDFromHex(id)
 	handleErr(err)
 	db.isCollection()
@@ -98,7 +99,7 @@ func (db *MongoDb) UpdateById(id string, entity interface{}) *mongo.SingleResult
 }
 
 func (db *MongoDb) DeleteById(id string) *mongo.SingleResult {
-	operation("DeleteById")
+	defer bench("DeleteById")
 	objectId, err := primitive.ObjectIDFromHex(id)
 	handleErr(err)
 	db.isCollection()
@@ -107,7 +108,7 @@ func (db *MongoDb) DeleteById(id string) *mongo.SingleResult {
 }
 
 func (db *MongoDb) DeleteMany() *mongo.DeleteResult {
-	operation("DeleteMany")
+	defer bench("DeleteMany")
 	db.isCollection()
 	defer db.close()
 	result, err := db.Collection.DeleteMany(ctx, db.Filters)
@@ -116,7 +117,7 @@ func (db *MongoDb) DeleteMany() *mongo.DeleteResult {
 }
 
 func (db *MongoDb) InsertMany(documents []interface{}) *mongo.InsertManyResult {
-	operation("InsertMany")
+	defer bench("InsertMany")
 	db.isCollection()
 	defer db.close()
 	result, err := db.Collection.InsertMany(ctx, documents)
@@ -136,8 +137,8 @@ func (db *MongoDb) close() {
 	fmt.Printf("%s Successfully disconnected\n", instance)
 }
 
-func operation(name string) {
-	fmt.Printf("%s Operation: %s\n", instance, name)
+func bench(name string) {
+	fmt.Printf("%s Operation: %s - %v\n", instance, name, time.Since(time.Now()))
 }
 
 func handleErr(err error) {

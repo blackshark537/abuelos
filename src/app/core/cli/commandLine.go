@@ -310,7 +310,8 @@ func InsertMany(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	data = string(file)
+	data := string(file)
+
 	switch collection {
 	case "lotes":
 		lotes := []entities.Lote{}
