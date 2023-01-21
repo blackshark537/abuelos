@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
+	"os"
 
 	"github.com/blackshark537/dataprod/src/app/core/config"
 	"github.com/blackshark537/dataprod/src/app/core/entities"
@@ -20,6 +20,8 @@ var (
 	objectId   string
 	data       string
 	filter     string
+	path       string
+	lote       string
 )
 
 var instance = color.MagentaString("[CLI]:")
@@ -63,9 +65,46 @@ var Commands []*cli.Command = []*cli.Command{
 		Action: listTable,
 	},
 	{
+		Name:    "project",
+		Aliases: []string{"prj"},
+		Usage:   "Project a lote",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "lote",
+				Usage:       "Lote number to project",
+				Aliases:     []string{"l"},
+				Destination: &lote,
+				Required:    true,
+			},
+		},
+		Action: projectLote,
+	},
+	{
+		Name:    "table",
+		Aliases: []string{"tb"},
+		Usage:   "Show a data projection table",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "type",
+				Usage:       "Type of chicken ('abuelos', 'reproductoras', 'pollos')",
+				Aliases:     []string{"t"},
+				Destination: &collection,
+				Required:    true,
+			},
+			&cli.StringFlag{
+				Name:        "select",
+				Usage:       "Type of data to show ('aves', 'hprod', 'hinc', 'nac')",
+				Aliases:     []string{"s"},
+				Destination: &data,
+				Required:    true,
+			},
+		},
+		Action: projectTable,
+	},
+	{
 		Name:    "insert",
 		Aliases: []string{"i"},
-		Usage:   "Insert object into a given collection",
+		Usage:   "Insert an object into a given collection",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "into",
@@ -83,6 +122,28 @@ var Commands []*cli.Command = []*cli.Command{
 			},
 		},
 		Action: insertIntoTable,
+	},
+	{
+		Name:    "bulk",
+		Aliases: []string{"b"},
+		Usage:   "Insert many objects into a given collection from a .json file",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "into",
+				Usage:       "Database Collection",
+				Aliases:     []string{"to"},
+				Destination: &collection,
+				Required:    true,
+			},
+			&cli.StringFlag{
+				Name:        "path",
+				Usage:       "File path of data to bulk",
+				Aliases:     []string{"p"},
+				Destination: &path,
+				Required:    true,
+			},
+		},
+		Action: InsertMany,
 	},
 	{
 		Name:    "delete",
@@ -105,6 +166,21 @@ var Commands []*cli.Command = []*cli.Command{
 			},
 		},
 		Action: deleteFromTable,
+	},
+	{
+		Name:    "clear",
+		Aliases: []string{"clr"},
+		Usage:   "Delete all items from a given collection",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "from",
+				Usage:       "Database Collection",
+				Aliases:     []string{"f"},
+				Destination: &collection,
+				Required:    true,
+			},
+		},
+		Action: DeleteAll,
 	},
 }
 
@@ -142,24 +218,36 @@ func serverStart(ctx *cli.Context) error {
 	return api.ForRoot(port)
 }
 
+func projectLote(ctx *cli.Context) error {
+	collection = "lotes"
+	service := new(services.AbuelosProjection)
+	fmt.Printf("%s List Colection: %s\n", instance, collection)
+	service.List(lote)
+	return nil
+}
+
+func projectTable(ctx *cli.Context) error {
+	switch collection {
+	case "abuelos":
+		service := new(services.AbuelosProjection)
+		fmt.Printf("%s List Colection: %s\n", instance, collection)
+		service.Table(2023, data, true)
+		return nil
+	case "reproductoras":
+		return noMatch()
+	case "pollos":
+		return noMatch()
+	default:
+		return noMatch()
+	}
+}
+
 func listTable(ctx *cli.Context) error {
 	sub := make(map[string]entities.EntityList)
 	sub["empresas"] = new(entities.Empresa)
 	sub["lotes"] = new(entities.Lote)
-	sub["projections"] = new(services.AbuelosProjection)
-	/* if sub[collection] == nil {
+	if sub[collection] == nil {
 		return noMatch()
-	} */
-	fmt.Printf("%s List Colection: %s\n", instance, collection)
-	if collection == "projections" {
-		year := time.Now().Year()
-		filter = fmt.Sprintf("{'year': {'$gt': %d}}", year+2)
-	}
-	if collection == "projectable" {
-		year := time.Now().Year()
-		service := services.AbuelosProjection{}
-		service.Table(int64(year), "Aves")
-		return nil
 	}
 	List(sub[collection], filter)
 	return nil
@@ -188,6 +276,35 @@ func insertIntoTable(ctx *cli.Context) error {
 		return nil
 	case "alimentos":
 		return nil
+	default:
+		return noMatch()
+	}
+}
+
+func InsertMany(ctx *cli.Context) error {
+	file, err := os.ReadFile(fmt.Sprintf("./%s", path))
+	if err != nil {
+		return err
+	}
+	data = string(file)
+	if collection == "lotes" {
+		lotes := []entities.Lote{}
+		json.Unmarshal([]byte(data), &lotes)
+		for _, el := range lotes {
+			el.Save()
+		}
+	}
+	return nil
+}
+
+func DeleteAll(ctx *cli.Context) error {
+	switch collection {
+	case "lotes":
+		l := new(entities.Lote)
+		return l.DeleteMany(filter)
+	case "empresas":
+		l := new(entities.Lote)
+		return l.DeleteMany(filter)
 	default:
 		return noMatch()
 	}

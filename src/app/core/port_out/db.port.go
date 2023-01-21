@@ -2,14 +2,16 @@ package portout
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/blackshark537/dataprod/src/app/core/config"
 	"github.com/blackshark537/dataprod/src/app/infraestructure/database"
 )
 
 type DbPort[t interface{}] struct {
-	Name   string
-	Entity *t
+	Name     string
+	Entity   *t
+	Entities *[]t
 }
 
 type DbAdapter struct{}
@@ -32,6 +34,11 @@ func (port *DbPort[t]) Count(filters string) (int64, error) {
 func (port *DbPort[t]) Save() (interface{}, error) {
 	mongodb.SelectTable(port.Name)
 	return mongodb.Create(port.Entity)
+}
+
+func (port *DbPort[t]) InsetMany(documents []interface{}) interface{} {
+	mongodb.SelectTable(port.Name)
+	return mongodb.InsertMany(documents)
 }
 
 func (port *DbPort[t]) Update(id string) error {
@@ -60,4 +67,11 @@ func (port *DbPort[t]) Delete(id string) error {
 	mongodb.SelectTable(port.Name)
 	result := mongodb.DeleteById(id)
 	return result.Err()
+}
+
+func (port *DbPort[t]) DeleteMany(ids []string) interface{} {
+	mongodb.SelectTable(port.Name)
+	mongodb.SetFilters(fmt.Sprintf("{'id': { '$eq': [%s] } }", ids))
+	result := mongodb.DeleteMany()
+	return result
 }

@@ -106,6 +106,24 @@ func (db *MongoDb) DeleteById(id string) *mongo.SingleResult {
 	return db.Collection.FindOneAndDelete(ctx, bson.M{"id": objectId})
 }
 
+func (db *MongoDb) DeleteMany() *mongo.DeleteResult {
+	operation("DeleteMany")
+	db.isCollection()
+	defer db.close()
+	result, err := db.Collection.DeleteMany(ctx, db.Filters)
+	handleErr(err)
+	return result
+}
+
+func (db *MongoDb) InsertMany(documents []interface{}) *mongo.InsertManyResult {
+	operation("InsertMany")
+	db.isCollection()
+	defer db.close()
+	result, err := db.Collection.InsertMany(ctx, documents)
+	handleErr(err)
+	return result
+}
+
 func (db *MongoDb) isCollection() {
 	if db.Collection == nil {
 		handleErr(errors.New(color.YellowString("[MongoDB]: Collection instance null")))

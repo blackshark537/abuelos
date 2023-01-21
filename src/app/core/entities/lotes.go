@@ -52,12 +52,31 @@ func (l *Lote) Save() (interface{}, error) {
 	return l.GetDbPort().Save()
 }
 
+/* func (l *Lote) InsertMany(documents []any) interface{} {
+	return l.GetDbPort().InsetMany(documents)
+} */
+
 func (l *Lote) Update(id string) error {
 	return l.GetDbPort().Update(id)
 }
 
 func (l *Lote) Delete(id string) error {
 	return l.GetDbPort().Delete(id)
+}
+
+func (l *Lote) DeleteMany(filters string) error {
+	var err error = nil
+	results, err := l.GetAll(filters)
+	if err != nil {
+		return err
+	}
+	for _, el := range results {
+		err = el.Delete(el.Id.Hex())
+		if err != nil {
+			break
+		}
+	}
+	return err
 }
 
 func (l *Lote) GetAll(filters string) ([]Lote, error) {

@@ -63,40 +63,44 @@ const (
 )
 
 var (
-	variable_mortalidad_recria          float64 = 5.0
-	variable_mortalidad_recria_ajustado float64 = 7.0
+	variable_mortalidad_recria          float64 = 4.0
+	variable_mortalidad_recria_ajustado float64 = 5.0
 
-	variable_mortalidad_produccion          float64 = 12.0
-	variable_mortalidad_produccion_ajustado float64 = 17.0
+	variable_mortalidad_produccion          float64 = 10.0
+	variable_mortalidad_produccion_ajustado float64 = 12.0
 
-	variable_produccion_huevos_totales float64 = 2
-	variable_aprovechamiento_huevos    float64 = 1
-	variable_nacimientos               float64 = 10
+	variable_produccion_huevos_totales float64 = 1
+	variable_aprovechamiento_huevos    float64 = 0.6
+	variable_nacimientos               float64 = 3
 )
 
 var instance string = color.MagentaString("[Projection]:")
 
 type AbuelosProjection struct{}
 
-func (p *AbuelosProjection) List(filters string) {
+func (p *AbuelosProjection) List(lote string) {
+	filters := fmt.Sprintf(`{"numero" : {"$eq": %v}}`, lote)
 	results := p.Project(filters)
 	fmt.Printf("%s %v Items\n", color.MagentaString("[Results]:"), len(results))
 	fmt.Println("-------------------------------------------------------------------")
 	fmt.Println("| Lote\t | Sem\t | mortalidad\t | Aves\t | Produc | Incub | Nac\t |")
 	fmt.Println("-------------------------------------------------------------------")
 	for _, el := range results {
-		fmt.Printf("| %d\t | %s\t | %f\t | %d\t | %d\t  | %d\t | %d\t |\n", el.Lote, el.Fecha.String(), el.Data.Mortalidad, el.Data.Aves, el.Data.HvosProducidos, el.Data.HvosIncubables, el.Data.Nacimientos)
+		fmt.Printf("| %d\t | %d\t | %f\t | %d\t | %d\t  | %d\t | %d\t |\n", el.Lote, el.Semana, el.Data.Mortalidad, el.Data.Aves, el.Data.HvosProducidos, el.Data.HvosIncubables, el.Data.Nacimientos)
 	}
 	fmt.Println("-------------------------------------------------------------------")
 }
 
-func (p *AbuelosProjection) Table(year int64, Type string) {
-	cols, rows := p.ProjectionTable(year)
+func (p *AbuelosProjection) Table(year int64, dataType string, isProduccion bool) {
+	cols, rows := p.ProjectionTable(year, dataType, isProduccion)
+
+	fmt.Printf("Data: %s Year: %v\n", dataType, year)
+	fmt.Println("----------------------------------------------------------------------------------------------------------")
 	fmt.Printf("| %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t |\n", cols[0], cols[1], cols[2], cols[3], cols[4], cols[5], cols[6], cols[7], cols[8], cols[9], cols[10], cols[11], cols[12])
 	for d := 0; d < len(rows[0]); d++ {
 		fmt.Printf("| %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t |\n", rows[0][d], rows[1][d], rows[2][d], rows[3][d], rows[4][d], rows[5][d], rows[6][d], rows[7][d], rows[8][d], rows[9][d], rows[10][d], rows[11][d], rows[12][d])
 	}
-	fmt.Println("-------------------------------------------------------------------")
+	fmt.Println("----------------------------------------------------------------------------------------------------------")
 }
 
 func (p *AbuelosProjection) Project(filters string) []LoteProjection {
@@ -119,21 +123,48 @@ func (p *AbuelosProjection) Project(filters string) []LoteProjection {
 
 func (p *AbuelosProjection) getRecria(lote entities.Lote) []LoteProjection {
 	recrias := []LoteProjection{}
-	var idx int8 = 0
+	data := DataProjected{
+		Mortalidad:         100,
+		MortalidadReal:     100,
+		Aves:               int64(lote.Hembras),
+		AvesReal:           int64(lote.Hembras),
+		HvosProducidos:     0,
+		HvosProducidosReal: 0,
+		HvosIncubables:     0,
+		HvosIncubablesReal: 0,
+		Nacimientos:        0,
+		NacimientosReal:    0,
+		Pollitos:           0,
+		PollitosReal:       0,
+	}
 	fecha, err := time.Parse("2006-01-02", lote.Entrada)
 	if err != nil {
 		handleErr(err)
 	}
-	var percent float64 = 100.0
-	var percentReal float64 = 100.0
+
+	recria := LoteProjection{
+		Lote:         lote.Numero,
+		Fecha:        fecha,
+		Semana:       0,
+		Day:          int16(fecha.Day()),
+		Month:        int8(fecha.Month()),
+		Year:         int64(fecha.Year()),
+		EnProduccion: false,
+		Data:         data,
+	}
+
+	recrias = append(recrias, recria)
+	var idx int8 = 0
+	var percent float64 = 0
+	var percentReal float64 = 0
 
 	for i := 0; i < semanas_en_recria*7; i++ {
 		if i%7 == 0 {
 			idx += 1
 		}
 		if len(recrias) > 0 {
-			percent = recrias[i-1].Data.Mortalidad
-			percentReal = recrias[i-1].Data.MortalidadReal
+			percent = recrias[i].Data.Mortalidad
+			percentReal = recrias[i].Data.MortalidadReal
 		}
 
 		mortality := percent - (variable_mortalidad_recria / float64(semanas_en_recria*7))
@@ -246,15 +277,31 @@ func (p *AbuelosProjection) getProduccion(lote LoteProjection) []LoteProjection 
 	return produccion
 }
 
-func (p *AbuelosProjection) ProjectionTable(year int64) ([]string, [13][32]int64) {
+func (p *AbuelosProjection) ProjectionTable(year int64, dataType string, isProduccion bool) ([]string, [13][32]int64) {
 	cols := []string{"Day", "jan", "feb", "mar", "apr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dec"}
 	rows := [13][32]int64{}
 	f := fmt.Sprintf("{'year': {'$eq': %d}}", year-1)
 	projections := p.Project(f)
 	for _, el := range projections {
-		if el.Year == year {
+		if el.Year == year && el.EnProduccion == isProduccion {
 			rows[0][el.Day-1] = int64(el.Day)
-			rows[el.Month][el.Day-1] += el.Data.Aves
+			switch dataType {
+			case "aves":
+				rows[el.Month][el.Day-1] += el.Data.Aves
+				break
+			case "hprod":
+				rows[el.Month][el.Day-1] += el.Data.HvosProducidos
+				break
+			case "hinc":
+				rows[el.Month][el.Day-1] += el.Data.HvosIncubables
+				break
+			case "nac":
+				rows[el.Month][el.Day-1] += el.Data.Nacimientos
+				break
+			default:
+				break
+			}
+
 		}
 	}
 	return cols, rows
