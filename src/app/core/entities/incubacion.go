@@ -9,23 +9,23 @@ import (
 var TpMaquina []string = []string{"incubadora", "ponedora"}
 
 type Maquina struct {
-	Id        primitive.ObjectID `bson: "_id"`
-	CreatedAt time.Time          `bson: "created_at"`
-	UpdatedAt time.Time          `bson: "updated_at"`
-	Numero    int16              `bson: "numero"`
-	Marca     string             `bson: "marca"`
-	Modelo    string             `bson: "modelo"`
-	Capacidad int64              `bson: "capacidad"`
-	Tipo      string             `bson: "tipo"`
+	Id        primitive.ObjectID `json:"id" xml:"id" form:"id"`
+	CreatedAt time.Time          `json:"CreatedAt" xml:"CreatedAt" form:"CreatedAt"`
+	UpdatedAt time.Time          `json:"UpdatedAt" xml:"UpdatedAt" form:"UpdatedAt"`
+	Numero    int16              `json:"numero" xml:"numero" form:"numero"`
+	Marca     string             `json:"marca" xml:"marca" form:"marca"`
+	Modelo    string             `json:"modelo" xml:"modelo" form:"modelo"`
+	Capacidad int64              `json:"capacidad" xml:"capacidad" form:"capacidad"`
+	Tipo      string             `json:"tipo" xml:"tipo" form:"tipo"`
 }
 
 type Incubacion struct {
-	Id         primitive.ObjectID `bson: "_id"`
-	CreatedAt  time.Time          `bson: "created_at"`
-	UpdatedAt  time.Time          `bson: "updated_at"`
-	Lote       string             `bson: "lote"`
-	Numero     int64              `bson: "numero"`
-	Fecha      time.Time          `bson: "fecha"`
-	Huevos     int64              `bson: "huevos"`
-	Incubadora Maquina            `bson: "incubadora"`
+	Id         primitive.ObjectID `json:"id" xml:"id" form:"id"`
+	CreatedAt  time.Time          `json:"CreatedAt" xml:"CreatedAt" form:"CreatedAt"`
+	UpdatedAt  time.Time          `json:"UpdatedAt" xml:"UpdatedAt" form:"UpdatedAt"`
+	Lote       string             `json:"lote" xml:"lote" form:"lote"`
+	Numero     int64              `json:"numero" xml:"numero" form:"numero"`
+	Fecha      time.Time          `json:"fecha" xml:"fecha" form:"fecha"`
+	Huevos     int64              `json:"huevos" xml:"huevos" form:"huevos"`
+	Incubadora Maquina            `json:"incubadora" xml:"incubadora" form:"incubadora"`
 }

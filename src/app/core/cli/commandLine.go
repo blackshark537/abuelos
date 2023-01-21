@@ -253,6 +253,9 @@ func projectTable(ctx *cli.Context) error {
 		}
 		services.AbuelosTable(year, data, prod)
 		return nil
+	case "incubations":
+		services.LisIncubations(year)
+		return nil
 	case "reproductoras":
 		return noMatch()
 	case "pollos":

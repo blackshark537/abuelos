@@ -116,20 +116,8 @@ func ProjectAbuelos(filters string) []LoteProjection {
 	projection := []LoteProjection{}
 
 	for _, lote := range lotes {
-		recriaChan := make(chan []LoteProjection)
-		prodChan := make(chan []LoteProjection)
-		go func() {
-			rec := getAbuelosRecria(lote)
-			recriaChan <- rec
-		}()
-		var recria []LoteProjection = <-recriaChan
-		go func() {
-			prod := getAbuelosProduccion(recria[len(recria)-1])
-			prodChan <- prod
-		}()
-
-		var produccion []LoteProjection = <-prodChan
-
+		recria := getAbuelosRecria(lote)
+		produccion := getAbuelosProduccion(recria[len(recria)-1])
 		projection = append(projection, recria...)
 		projection = append(projection, produccion...)
 	}
