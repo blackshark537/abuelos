@@ -2,6 +2,7 @@ package entities
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,8 +18,8 @@ type Lote struct {
 	UpdatedAt time.Time          `json:"UpdatedAt" xml:"UpdatedAt" form:"UpdatedAt"`
 	Numero    int64              `json:"numero" xml:"numero" form:"numero" validate:"required, number"`
 	Entrada   string             `json:"entrada" xml:"entrada" form:"entrada" validate:"required"`
-	Month     string             `json:"month" xml:"month" form:"month"`
-	Year      string             `json:"year" xml:"year" form:"year"`
+	Month     int64              `json:"month" xml:"month" form:"month"`
+	Year      int64              `json:"year" xml:"year" form:"year"`
 	Empresa   string             `json:"empresa" xml:"empresa" form:"empresa" validate:"required, min=10, max=100"`
 	Hembras   int32              `json:"hembras" xml:"hembras" form:"hembras" validate:"required, number, min=0"`
 	Machos    int32              `json:"Machos" xml:"Machos" form:"Machos" validate:"required, number, min=0"`
@@ -47,14 +48,15 @@ func (l *Lote) Save() (interface{}, error) {
 	l.CreatedAt = time.Now()
 	l.UpdatedAt = time.Now()
 	l.Id = primitive.NewObjectID()
-	l.Month = strings.Split(l.Entrada, "-")[1]
-	l.Year = strings.Split(l.Entrada, "-")[0]
+	month, err := strconv.ParseInt(strings.Split(l.Entrada, "-")[1], 10, 64)
+	l.Month = month
+	year, err := strconv.ParseInt(strings.Split(l.Entrada, "-")[0], 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	l.Year = year
 	return l.GetDbPort().Save()
 }
-
-/* func (l *Lote) InsertMany(documents []any) interface{} {
-	return l.GetDbPort().InsetMany(documents)
-} */
 
 func (l *Lote) Update(id string) error {
 	return l.GetDbPort().Update(id)

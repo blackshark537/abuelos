@@ -64,6 +64,21 @@ func (e *Empresa) Delete(id string) error {
 	return e.GetDbPort().Delete(id)
 }
 
+func (e *Empresa) DeleteMany(filters string) error {
+	var err error = nil
+	results, err := e.GetAll(filters)
+	if err != nil {
+		return err
+	}
+	for _, el := range results {
+		err = el.Delete(el.Id.Hex())
+		if err != nil {
+			break
+		}
+	}
+	return err
+}
+
 func (e *Empresa) GetAll(filters string) ([]Empresa, error) {
 	return e.GetDbPort().GetAll(filters)
 }
@@ -75,6 +90,7 @@ func (e *Empresa) FindOne(filters string) error {
 func (e *Empresa) List(filter string) {
 	results, err := e.GetAll(filter)
 	handleErr(err)
+	var asignTotal int64 = 0
 	fmt.Printf("%s %v Items\n", color.MagentaString("[Results]:"), len(results))
 	for _, el := range results {
 
@@ -87,7 +103,10 @@ func (e *Empresa) List(filter string) {
 		}
 		fmt.Printf("Asignación: %v\n", el.Asignacion)
 		fmt.Printf("Tipo: %v\n", el.Tipo)
+		asignTotal += el.Asignacion
 	}
+	fmt.Println("------------------------------------------------------------")
+	fmt.Println("Asignacion Total =", color.HiRedString(fmt.Sprintf("%d", asignTotal)))
 	fmt.Println("------------------------------------------------------------")
 }
 

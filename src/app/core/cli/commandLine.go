@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/blackshark537/dataprod/src/app/core/config"
 	"github.com/blackshark537/dataprod/src/app/core/entities"
@@ -15,13 +16,15 @@ import (
 )
 
 var (
-	port       string
-	collection string
-	objectId   string
-	data       string
-	filter     string
-	path       string
-	lote       string
+	port         string
+	collection   string
+	objectId     string
+	data         string
+	filter       string
+	path         string
+	lote         string
+	isProduccion string
+	year         string
 )
 
 var instance = color.MagentaString("[CLI]:")
@@ -56,7 +59,7 @@ var Commands []*cli.Command = []*cli.Command{
 			},
 			&cli.StringFlag{
 				Name:        "where",
-				Usage:       "Filter",
+				Usage:       `Apply Filters Ex: '{"property": {"$regex": "myValue"}}'`,
 				Aliases:     []string{"w"},
 				Destination: &filter,
 				Value:       "",
@@ -95,8 +98,22 @@ var Commands []*cli.Command = []*cli.Command{
 				Name:        "select",
 				Usage:       "Type of data to show ('aves', 'hprod', 'hinc', 'nac')",
 				Aliases:     []string{"s"},
+				Value:       "aves",
 				Destination: &data,
-				Required:    true,
+			},
+			&cli.StringFlag{
+				Name:        "year",
+				Usage:       "Data Year",
+				Aliases:     []string{"y"},
+				Value:       fmt.Sprintf("%d", time.Now().Year()),
+				Destination: &year,
+			},
+			&cli.StringFlag{
+				Name:        "produccion",
+				Usage:       "If True shows birds in Produccion else in Recria",
+				Aliases:     []string{"p"},
+				Value:       "yes",
+				Destination: &isProduccion,
 			},
 		},
 		Action: projectTable,
@@ -220,18 +237,21 @@ func serverStart(ctx *cli.Context) error {
 
 func projectLote(ctx *cli.Context) error {
 	collection = "lotes"
-	service := new(services.AbuelosProjection)
 	fmt.Printf("%s List Colection: %s\n", instance, collection)
-	service.List(lote)
+	services.ListAbuelos(lote)
 	return nil
 }
 
 func projectTable(ctx *cli.Context) error {
 	switch collection {
 	case "abuelos":
-		service := new(services.AbuelosProjection)
+
 		fmt.Printf("%s List Colection: %s\n", instance, collection)
-		service.Table(2023, data, true)
+		prod := false
+		if isProduccion == "y" || isProduccion == "yes" {
+			prod = true
+		}
+		services.AbuelosTable(year, data, prod)
 		return nil
 	case "reproductoras":
 		return noMatch()
@@ -243,14 +263,18 @@ func projectTable(ctx *cli.Context) error {
 }
 
 func listTable(ctx *cli.Context) error {
-	sub := make(map[string]entities.EntityList)
-	sub["empresas"] = new(entities.Empresa)
-	sub["lotes"] = new(entities.Lote)
-	if sub[collection] == nil {
+	switch collection {
+	case "empresas":
+		e := new(entities.Empresa)
+		e.List(filter)
+		return nil
+	case "lotes":
+		e := new(entities.Lote)
+		e.List(filter)
+		return nil
+	default:
 		return noMatch()
 	}
-	List(sub[collection], filter)
-	return nil
 }
 
 func List(e entities.EntityList, filter string) {
@@ -287,14 +311,32 @@ func InsertMany(ctx *cli.Context) error {
 		return err
 	}
 	data = string(file)
-	if collection == "lotes" {
+	switch collection {
+	case "lotes":
 		lotes := []entities.Lote{}
-		json.Unmarshal([]byte(data), &lotes)
+		err := json.Unmarshal([]byte(data), &lotes)
+		if err != nil {
+			return err
+		}
 		for _, el := range lotes {
 			el.Save()
 		}
+		return nil
+	case "empresas":
+		empresas := []entities.Empresa{}
+		err := json.Unmarshal([]byte(data), &empresas)
+		if err != nil {
+			return err
+		}
+		for _, el := range empresas {
+			geo := new(entities.Geopoint)
+			json.Unmarshal([]byte(data), &geo)
+			el.Save(geo)
+		}
+		return nil
+	default:
+		return noMatch()
 	}
-	return nil
 }
 
 func DeleteAll(ctx *cli.Context) error {
@@ -311,22 +353,27 @@ func DeleteAll(ctx *cli.Context) error {
 }
 
 func deleteFromTable(ctx *cli.Context) error {
-	sub := make(map[string]entities.EntityDelete)
-	sub["empresas"] = new(entities.Empresa)
-	sub["lotes"] = new(entities.Lote)
-	if sub[collection] == nil {
-		return noMatch()
-	}
-
 	fmt.Printf("%s Delete From Colection: %s\n", instance, collection)
 	fmt.Println("_Id: ", objectId)
-	return Delete(sub[collection], objectId)
-}
-
-func Delete(e entities.EntityDelete, id string) error {
-	return e.Delete(id)
+	switch collection {
+	case "empresas":
+		e := new(entities.Empresa)
+		return e.Delete(objectId)
+	case "lotes":
+		e := new(entities.Lote)
+		return e.Delete(objectId)
+	default:
+		return noMatch()
+	}
 }
 
 func noMatch() error {
 	return errors.New("Sorry No collection matched!")
+}
+
+func handleErr(e error) error {
+	if e != nil {
+		return e
+	}
+	return nil
 }
