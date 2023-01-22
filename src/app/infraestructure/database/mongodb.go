@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
+	"github.com/blackshark537/dataprod/src/app/core/config"
 	"github.com/fatih/color"
 )
 
@@ -58,7 +59,8 @@ func (db MongoDb) Where(prop string, cond string, value any) {
 }
 
 func (db *MongoDb) Count() (int64, error) {
-	defer bench("Count")
+	t := time.Now()
+	defer bench("Count", t)
 	db.isCollection()
 	count, err := db.Collection.CountDocuments(ctx, db.Filters)
 	defer db.close()
@@ -66,7 +68,8 @@ func (db *MongoDb) Count() (int64, error) {
 }
 
 func (db *MongoDb) Create(object interface{}) (*mongo.InsertOneResult, error) {
-	defer bench("Create")
+	t := time.Now()
+	defer bench("Create", t)
 	db.isCollection()
 	result, err := db.Collection.InsertOne(ctx, object)
 	defer db.close()
@@ -74,7 +77,8 @@ func (db *MongoDb) Create(object interface{}) (*mongo.InsertOneResult, error) {
 }
 
 func (db *MongoDb) Find() *mongo.Cursor {
-	defer bench("FindAll")
+	t := time.Now()
+	defer bench("FindAll", t)
 	db.isCollection()
 	cursor, err := db.Collection.Find(ctx, db.Filters)
 	handleErr(err)
@@ -83,14 +87,16 @@ func (db *MongoDb) Find() *mongo.Cursor {
 }
 
 func (db *MongoDb) FindOne() *mongo.SingleResult {
-	defer bench("FindOne")
+	t := time.Now()
+	defer bench("FindOne", t)
 	db.isCollection()
 	defer db.close()
 	return db.Collection.FindOne(ctx, db.Filters)
 }
 
 func (db *MongoDb) UpdateById(id string, entity interface{}) *mongo.SingleResult {
-	defer bench("UpdateById")
+	t := time.Now()
+	defer bench("UpdateById", t)
 	objectId, err := primitive.ObjectIDFromHex(id)
 	handleErr(err)
 	db.isCollection()
@@ -99,7 +105,8 @@ func (db *MongoDb) UpdateById(id string, entity interface{}) *mongo.SingleResult
 }
 
 func (db *MongoDb) DeleteById(id string) *mongo.SingleResult {
-	defer bench("DeleteById")
+	t := time.Now()
+	defer bench("DeleteById", t)
 	objectId, err := primitive.ObjectIDFromHex(id)
 	handleErr(err)
 	db.isCollection()
@@ -108,7 +115,8 @@ func (db *MongoDb) DeleteById(id string) *mongo.SingleResult {
 }
 
 func (db *MongoDb) DeleteMany() *mongo.DeleteResult {
-	defer bench("DeleteMany")
+	t := time.Now()
+	defer bench("DeleteMany", t)
 	db.isCollection()
 	defer db.close()
 	result, err := db.Collection.DeleteMany(ctx, db.Filters)
@@ -117,7 +125,8 @@ func (db *MongoDb) DeleteMany() *mongo.DeleteResult {
 }
 
 func (db *MongoDb) InsertMany(documents []interface{}) *mongo.InsertManyResult {
-	defer bench("InsertMany")
+	t := time.Now()
+	defer bench("InsertMany", t)
 	db.isCollection()
 	defer db.close()
 	result, err := db.Collection.InsertMany(ctx, documents)
@@ -137,8 +146,10 @@ func (db *MongoDb) close() {
 	fmt.Printf("%s Successfully disconnected\n", instance)
 }
 
-func bench(name string) {
-	fmt.Printf("%s Operation: %s - %v\n", instance, name, time.Since(time.Now()))
+func bench(name string, t time.Time) {
+	if config.IsBench {
+		fmt.Printf("%s Operation: %s - %v mili secs\n", instance, name, time.Since(t).Milliseconds())
+	}
 }
 
 func handleErr(err error) {

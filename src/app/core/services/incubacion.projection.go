@@ -9,16 +9,17 @@ import (
 type Incubation struct {
 	Fecha       time.Time
 	WeekDay     time.Weekday
-	Nacimientos int64
+	Nacimientos int
 }
 
 func GetIncubations(year string) []Incubation {
-	defer bench("GetIncubations")
+	t := time.Now()
+	defer bench("GetIncubations", t)
 	_year, err := strconv.ParseInt(year, 10, 64)
 	handleErr(err)
 	_, rows := AbuelosProjectionTable(year, "nac", true)
-	var mon_acc int64 = 0
-	var fri_acc int64 = 0
+	var mon_acc = 0
+	var fri_acc = 0
 	date, err := time.Parse("2006-03-01", fmt.Sprintf("%d-01-01", _year))
 	handleErr(err)
 	results := []Incubation{}

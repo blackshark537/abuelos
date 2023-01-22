@@ -19,9 +19,11 @@ type DbAdapter struct{}
 var mongodb *database.MongoDb = nil
 
 func (a *DbAdapter) ForRoot() {
-	mongodb = &database.MongoDb{
-		Uri:  config.DatabaseUri,
-		Name: config.DatabaseName,
+	if mongodb == nil {
+		mongodb = &database.MongoDb{
+			Uri:  config.DatabaseUri,
+			Name: config.DatabaseName,
+		}
 	}
 }
 

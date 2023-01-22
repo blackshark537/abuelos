@@ -1,11 +1,16 @@
 package portin
 
-import api "github.com/blackshark537/dataprod/src/app/Api"
+import (
+	api "github.com/blackshark537/dataprod/src/app/Api"
+)
 
 type ApiAdapter struct{}
 
-func (a *ApiAdapter) ForRoot(port string) error {
-	//msg := color.RedString("Api Sever not available")
-	//return errors.New(msg)
-	return api.ForRoot(port)
+var _api *api.API = nil
+
+func (ap *ApiAdapter) ForRoot(port string) error {
+	if _api == nil {
+		_api = new(api.API)
+	}
+	return _api.ForRoot(port)
 }

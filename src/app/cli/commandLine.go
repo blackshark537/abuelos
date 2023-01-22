@@ -1,16 +1,13 @@
 package CommandLine
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
+	"github.com/blackshark537/dataprod/src/app/core"
+	core_command "github.com/blackshark537/dataprod/src/app/core/command"
 	"github.com/blackshark537/dataprod/src/app/core/config"
-	"github.com/blackshark537/dataprod/src/app/core/entities"
-	portin "github.com/blackshark537/dataprod/src/app/core/port_in"
-	"github.com/blackshark537/dataprod/src/app/core/services"
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 )
@@ -28,7 +25,7 @@ var (
 )
 
 var instance = color.MagentaString("[CLI]:")
-
+var cmds *core_command.CliCommand = new(core_command.CliCommand)
 var Commands []*cli.Command = []*cli.Command{
 	{
 		Name:    "serve",
@@ -203,6 +200,7 @@ var Commands []*cli.Command = []*cli.Command{
 
 // Create and returns the cli app instance
 func New() *cli.App {
+	core.ForRoot()
 	website := color.CyanString("WEBSITE: https://dataprod.cloud")
 	support := color.GreenString("SUPPORT: support@dataprod.cloud")
 	cli.AppHelpTemplate = fmt.Sprintf(`%s
@@ -230,149 +228,55 @@ func New() *cli.App {
 }
 
 func serverStart(ctx *cli.Context) error {
-	fmt.Printf("%s Server Starting on port: %s\n", instance, port)
-	api := portin.ApiAdapter{}
-	return api.ForRoot(port)
+	return cmds.ServerStart(port)
 }
 
 func projectLote(ctx *cli.Context) error {
-	collection = "lotes"
-	fmt.Printf("%s List Colection: %s\n", instance, collection)
-	services.ListAbuelos(lote)
+	cmds.Collection = "lotes"
+	cmds.ListAbuelos(lote)
 	return nil
 }
 
 func projectTable(ctx *cli.Context) error {
-	switch collection {
-	case "abuelos":
+	cmds.Collection = collection
+	return cmds.ProjectTable(year, data, prodToBool())
+}
 
-		fmt.Printf("%s List Colection: %s\n", instance, collection)
-		prod := false
-		if isProduccion == "y" || isProduccion == "yes" {
-			prod = true
-		}
-		services.AbuelosTable(year, data, prod)
-		return nil
-	case "incubations":
-		services.LisIncubations(year)
-		return nil
-	case "reproductoras":
-		return noMatch()
-	case "pollos":
-		return noMatch()
-	default:
-		return noMatch()
+func prodToBool() bool {
+	prod := false
+	if isProduccion == "yes" || isProduccion == "y" {
+		prod = true
 	}
+	return prod
 }
 
 func listTable(ctx *cli.Context) error {
-	switch collection {
-	case "empresas":
-		e := new(entities.Empresa)
-		e.List(filter)
-		return nil
-	case "lotes":
-		e := new(entities.Lote)
-		e.List(filter)
-		return nil
-	default:
-		return noMatch()
-	}
-}
-
-func List(e entities.EntityList, filter string) {
-	e.List(filter)
+	cmds.Collection = collection
+	return cmds.ListTable(filter)
 }
 
 func insertIntoTable(ctx *cli.Context) error {
-	fmt.Printf("%s Insert Into Colection: %s\n", instance, collection)
-	fmt.Printf("%s Data: %s\n", instance, data)
-	switch collection {
-	case "empresas":
-		empresa := new(entities.Empresa)
-		gpoin := new(entities.Geopoint)
-		json.Unmarshal([]byte(data), empresa)
-		json.Unmarshal([]byte(data), gpoin)
-		res, err := empresa.Save(gpoin)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("Object %v successfully created!\n", res)
-		return nil
-	case "lotes":
-		return nil
-	case "alimentos":
-		return nil
-	default:
-		return noMatch()
-	}
+	cmds.Collection = collection
+	return cmds.InsertIntoCollection(data)
 }
 
 func InsertMany(ctx *cli.Context) error {
-	file, err := os.ReadFile(fmt.Sprintf("./%s", path))
-	if err != nil {
-		return err
-	}
-	data := string(file)
-
-	switch collection {
-	case "lotes":
-		lotes := []entities.Lote{}
-		err := json.Unmarshal([]byte(data), &lotes)
-		if err != nil {
-			return err
-		}
-		for _, el := range lotes {
-			el.Save()
-		}
-		return nil
-	case "empresas":
-		empresas := []entities.Empresa{}
-		err := json.Unmarshal([]byte(data), &empresas)
-		if err != nil {
-			return err
-		}
-		for _, el := range empresas {
-			geo := new(entities.Geopoint)
-			json.Unmarshal([]byte(data), &geo)
-			el.Save(geo)
-		}
-		return nil
-	default:
-		return noMatch()
-	}
+	cmds.Collection = collection
+	return cmds.InsertFromFile(path)
 }
 
 func DeleteAll(ctx *cli.Context) error {
-	switch collection {
-	case "lotes":
-		l := new(entities.Lote)
-		return l.DeleteMany(filter)
-	case "empresas":
-		l := new(entities.Lote)
-		return l.DeleteMany(filter)
-	default:
-		return noMatch()
-	}
+	cmds.Collection = collection
+	return cmds.ClearCollection(filter)
 }
 
 func deleteFromTable(ctx *cli.Context) error {
-	fmt.Printf("%s Delete From Colection: %s\n", instance, collection)
-	fmt.Println("_Id: ", objectId)
-	switch collection {
-	case "empresas":
-		e := new(entities.Empresa)
-		return e.Delete(objectId)
-	case "lotes":
-		e := new(entities.Lote)
-		return e.Delete(objectId)
-	default:
-		return noMatch()
-	}
+	cmds.Collection = collection
+	return cmds.RemoveFromCollection(objectId)
 }
 
 func noMatch() error {
-	return errors.New("Sorry No collection matched!")
+	return errors.New(fmt.Sprintf("%s Sorry No collection matched!", instance))
 }
 
 func handleErr(e error) error {

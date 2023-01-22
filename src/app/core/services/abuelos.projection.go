@@ -3,27 +3,27 @@ package services
 import (
 	"fmt"
 	"log"
-	"math"
 	"strconv"
 	"time"
 
+	"github.com/blackshark537/dataprod/src/app/core/config"
 	"github.com/blackshark537/dataprod/src/app/core/entities"
 	"github.com/fatih/color"
 )
 
 type DataProjected struct {
-	Mortalidad         float64
-	MortalidadReal     float64
-	Aves               int64
-	AvesReal           int64
-	HvosProducidos     int64
-	HvosProducidosReal int64
-	HvosIncubables     int64
-	HvosIncubablesReal int64
-	Nacimientos        int64
-	NacimientosReal    int64
-	Pollitos           int64
-	PollitosReal       int64
+	Mortalidad         float32
+	MortalidadReal     float32
+	Aves               int
+	AvesReal           int
+	HvosProducidos     int
+	HvosProducidosReal int
+	HvosIncubables     int
+	HvosIncubablesReal int
+	Nacimientos        int
+	NacimientosReal    int
+	Pollitos           int
+	PollitosReal       int
 }
 
 type LoteProjection struct {
@@ -34,6 +34,9 @@ type LoteProjection struct {
 	Month        int8
 	Year         int64
 	EnProduccion bool
+	StdProd      float32
+	StdApro      float32
+	StdNac       float32
 	Data         DataProjected
 }
 
@@ -43,16 +46,18 @@ type TableProjection struct {
 	Year  int64
 }
 
-var _PROD = []float64{
+var cache map[string][]LoteProjection
+
+var _PROD = []float32{
 	0, 8.40, 28.50, 48, 60.30, 69.70, 74.10, 77.50, 77.40, 77.10, 76.30, 74.80, 73.10, 71.40, 69.30, 67.20, 65.10, 63.30,
 	61.10, 59, 57.10, 55.30, 53.50, 51.60, 49.70, 48, 46.20, 44.80, 43.60, 42.40, 41.40, 40.50, 39.50, 38.60, 37.70, 36.80,
 	36, 35.10, 34.20, 33.30, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22,
 }
-var _APROV = []float64{
+var _APROV = []float32{
 	0, 50, 78, 84, 88, 90, 92, 94, 94, 95, 95, 95, 95, 95, 95, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 95, 95, 95, 95, 95, 95,
 	94, 94, 94, 94, 94, 93, 93, 93, 93, 93, 93, 92, 92, 92, 92, 91, 91, 90,
 }
-var _Nac = []float64{
+var _NAC = []float32{
 	0, 0, 55, 65, 70, 75, 80, 81, 82, 83, 83, 82, 82, 82, 81, 81, 81, 80, 80, 80, 80, 79, 79, 78, 78, 77, 77, 77, 76, 76, 75, 75, 74, 74,
 	73, 73, 72, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57,
 }
@@ -64,15 +69,15 @@ const (
 )
 
 var (
-	variable_mortalidad_recria          float64 = 4.0
-	variable_mortalidad_recria_ajustado float64 = 5.0
+	variable_mortalidad_recria          float32 = 4.0
+	variable_mortalidad_recria_ajustado float32 = 5.0
 
-	variable_mortalidad_produccion          float64 = 10.0
-	variable_mortalidad_produccion_ajustado float64 = 12.0
+	variable_mortalidad_produccion          float32 = 10.0
+	variable_mortalidad_produccion_ajustado float32 = 12.0
 
-	variable_produccion_huevos_totales float64 = 1
-	variable_aprovechamiento_huevos    float64 = 0.6
-	variable_nacimientos               float64 = 3
+	variable_produccion_huevos_totales float32 = 0
+	variable_aprovechamiento_huevos    float32 = 0
+	variable_NACimientos               float32 = 0
 )
 
 var instance string = color.MagentaString("[Projection]:")
@@ -84,11 +89,12 @@ func ListAbuelos(lote string) {
 	filters := fmt.Sprintf(`{"numero" : {"$eq": %v}}`, lote)
 	results := ProjectAbuelos(filters)
 	fmt.Printf("%s %v Items\n", color.MagentaString("[Results]:"), len(results))
+	fmt.Printf("%s %v\n", color.MagentaString("[Lote]:"), lote)
 	fmt.Println("-------------------------------------------------------------------")
-	fmt.Println("| Lote\t | Sem\t | mortalidad\t | Aves\t | Produc | Incub | Nac\t |")
+	fmt.Println("| Lote\t | Sem\t | mortalidad\t | Aves\t | STD\t | Produc\t | STD\t | Incub | STD\t | Nac\t |")
 	fmt.Println("-------------------------------------------------------------------")
 	for _, el := range results {
-		fmt.Printf("| %d\t | %d\t | %f\t | %d\t | %d\t  | %d\t | %d\t |\n", el.Lote, el.Semana, el.Data.Mortalidad, el.Data.Aves, el.Data.HvosProducidos, el.Data.HvosIncubables, el.Data.Nacimientos)
+		fmt.Printf("| %d\t | %f\t | %d\t | %f\t | %d\t  | %f\t | %d\t | %f\t | %d\t |\n", el.Semana, el.Data.Mortalidad, el.Data.Aves, el.StdProd, el.Data.HvosProducidos, el.StdApro, el.Data.HvosIncubables, el.StdNac, el.Data.Nacimientos)
 	}
 	fmt.Println("-------------------------------------------------------------------")
 }
@@ -107,7 +113,11 @@ func AbuelosTable(year string, dataType string, isProduccion bool) {
 }
 
 func ProjectAbuelos(filters string) []LoteProjection {
-	defer bench("LoteProjection")
+	t := time.Now()
+	defer bench("LoteProjection", t)
+	if cache[filters] != nil {
+		return cache[filters]
+	}
 	loteEntity := new(entities.Lote)
 	lotes, err := loteEntity.GetAll(filters)
 	if err != nil {
@@ -116,11 +126,23 @@ func ProjectAbuelos(filters string) []LoteProjection {
 	projection := []LoteProjection{}
 
 	for _, lote := range lotes {
+		/* recriaCh := make(chan []LoteProjection, 500)
+		prodCh := make(chan []LoteProjection, 500)
+		go func() {
+			recriaCh <-
+		}() */
 		recria := getAbuelosRecria(lote)
+		/* go func() {
+			prodCh <-
+		}() */
 		produccion := getAbuelosProduccion(recria[len(recria)-1])
+		//close(prodCh)
+		//close(recriaCh)
 		projection = append(projection, recria...)
 		projection = append(projection, produccion...)
 	}
+	cache = make(map[string][]LoteProjection, len(projection))
+	cache[filters] = projection
 	return projection
 }
 
@@ -129,8 +151,8 @@ func getAbuelosRecria(lote entities.Lote) []LoteProjection {
 	data := DataProjected{
 		Mortalidad:         100,
 		MortalidadReal:     100,
-		Aves:               int64(lote.Hembras),
-		AvesReal:           int64(lote.Hembras),
+		Aves:               int(lote.Hembras),
+		AvesReal:           int(lote.Hembras),
 		HvosProducidos:     0,
 		HvosProducidosReal: 0,
 		HvosIncubables:     0,
@@ -158,8 +180,8 @@ func getAbuelosRecria(lote entities.Lote) []LoteProjection {
 
 	recrias = append(recrias, recria)
 	var idx int8 = 0
-	var percent float64 = 0
-	var percentReal float64 = 0
+	var percent float32 = 0
+	var percentReal float32 = 0
 
 	for i := 0; i < semanas_en_recria*7; i++ {
 		if i%7 == 0 {
@@ -170,17 +192,17 @@ func getAbuelosRecria(lote entities.Lote) []LoteProjection {
 			percentReal = recrias[i].Data.MortalidadReal
 		}
 
-		mortality := percent - (variable_mortalidad_recria / float64(semanas_en_recria*7))
-		mortalityReal := percentReal - (variable_mortalidad_recria_ajustado / float64((semanas_en_recria * 7)))
+		mortality := percent - (variable_mortalidad_recria / float32(semanas_en_recria*7))
+		mortalityReal := percentReal - (variable_mortalidad_recria_ajustado / float32((semanas_en_recria * 7)))
 
-		aves := float64(lote.Hembras) * mortality / 100
-		aves_real := float64(lote.Hembras) * mortalityReal / 100
+		aves := float32(lote.Hembras) * mortality / 100.0
+		aves_real := float32(lote.Hembras) * mortalityReal / 100.0
 
 		data := DataProjected{
 			Mortalidad:         mortality,
 			MortalidadReal:     mortalityReal,
-			Aves:               int64(math.Floor(aves)),
-			AvesReal:           int64(math.Floor(aves_real)),
+			Aves:               int(aves),
+			AvesReal:           int(aves_real),
 			HvosProducidos:     0,
 			HvosProducidosReal: 0,
 			HvosIncubables:     0,
@@ -200,6 +222,9 @@ func getAbuelosRecria(lote entities.Lote) []LoteProjection {
 			Month:        int8(fecha.Month()),
 			Year:         int64(fecha.Year()),
 			EnProduccion: false,
+			StdProd:      0,
+			StdApro:      0,
+			StdNac:       0,
 			Data:         data,
 		}
 
@@ -215,8 +240,8 @@ func getAbuelosProduccion(lote LoteProjection) []LoteProjection {
 	if err != nil {
 		handleErr(err)
 	}
-	var percent float64 = 100.0
-	var percentReal float64 = 100.0
+	var percent float32 = 100
+	var percentReal float32 = 100
 
 	for i := 0; i < semanas_en_produccion*7; i++ {
 		if i%7 == 0 {
@@ -227,38 +252,38 @@ func getAbuelosProduccion(lote LoteProjection) []LoteProjection {
 			percentReal = produccion[i-1].Data.MortalidadReal
 		}
 
-		mortality := percent - (variable_mortalidad_produccion / float64(semanas_en_produccion*7))
-		mortalityReal := percentReal - (variable_mortalidad_produccion_ajustado / float64((semanas_en_produccion * 7)))
-		aves := (float64(lote.Data.Aves) * mortality / 100)
-		aves_real := (float64(lote.Data.Aves) * mortalityReal / 100)
+		mortality := percent - (variable_mortalidad_produccion / float32(semanas_en_produccion*7))
+		mortalityReal := percentReal - (variable_mortalidad_produccion_ajustado / float32((semanas_en_produccion * 7)))
+		aves := (float32(lote.Data.Aves) * mortality / 100)
+		aves_real := (float32(lote.Data.Aves) * mortalityReal / 100)
 
 		// Standar de produccion Real
-		std_prod := _PROD[idx] - (_PROD[idx] * variable_produccion_huevos_totales / 100.0)
+		std_prod := _PROD[idx] - (_PROD[idx] * variable_produccion_huevos_totales / 100)
 		// Standar de Aprovechamiento Real
-		std_aprov := _APROV[idx] - (_APROV[idx] * variable_aprovechamiento_huevos / 100.0)
+		std_aprov := _APROV[idx] - (_APROV[idx] * variable_aprovechamiento_huevos / 100)
 		// Standar de Nacimientos Real
-		std_nac := _Nac[idx] - (_Nac[idx] * variable_nacimientos / 100.0)
+		std_NAC := _NAC[idx] - (_NAC[idx] * variable_NACimientos / 100)
 
-		h_totales_real := aves * float64(std_prod) / 100
-		h_totales := aves_real * float64(_PROD[idx]) / 100
+		h_totales := aves * _PROD[idx] / 100
+		h_totales_real := aves_real * std_prod / 100
 
-		h_incubables_real := h_totales * float64(std_aprov) / 100
-		h_incubables := h_totales_real * float64(_APROV[idx]) / 100
+		h_incubables := h_totales * _APROV[idx] / 100
+		h_incubables_real := h_totales_real * std_aprov / 100
 
-		p_nacidos_real := h_incubables * float64(std_nac) / 100
-		p_nacidos := h_incubables_real * float64(_Nac[idx]) / 100
+		p_NACidos := h_incubables * _NAC[idx] / 100
+		p_NACidos_real := h_incubables_real * std_NAC / 100
 
 		data := DataProjected{
 			Mortalidad:         mortality,
 			MortalidadReal:     mortalityReal,
-			Aves:               int64(math.Floor(aves)),
-			AvesReal:           int64(math.Floor(aves_real)),
-			HvosProducidos:     int64(math.Floor(h_totales)),
-			HvosProducidosReal: int64(math.Floor(h_totales_real)),
-			HvosIncubables:     int64(math.Floor(h_incubables)),
-			HvosIncubablesReal: int64(math.Floor(h_incubables_real)),
-			Nacimientos:        int64(math.Floor(p_nacidos / 2)),
-			NacimientosReal:    int64(math.Floor(p_nacidos_real / 2)),
+			Aves:               int(aves),
+			AvesReal:           int(aves_real),
+			HvosProducidos:     int(h_totales),
+			HvosProducidosReal: int(h_totales_real),
+			HvosIncubables:     int(h_incubables),
+			HvosIncubablesReal: int(h_incubables_real),
+			Nacimientos:        int(p_NACidos / 2),
+			NacimientosReal:    int(p_NACidos_real / 2),
 			Pollitos:           0,
 			PollitosReal:       0,
 		}
@@ -272,6 +297,9 @@ func getAbuelosProduccion(lote LoteProjection) []LoteProjection {
 			Month:        int8(fecha.Month()),
 			Year:         int64(fecha.Year()),
 			EnProduccion: true,
+			StdProd:      _PROD[idx],
+			StdApro:      _APROV[idx],
+			StdNac:       _NAC[idx],
 			Data:         data,
 		}
 
@@ -280,8 +308,9 @@ func getAbuelosProduccion(lote LoteProjection) []LoteProjection {
 	return produccion
 }
 
-func AbuelosProjectionTable(year string, dataType string, isProduccion bool) ([]string, [13][32]int64) {
-	defer bench("ProjectionTable")
+func AbuelosProjectionTable(year string, dataType string, isProduccion bool) ([]string, [13][32]int) {
+	t := time.Now()
+	defer bench("ProjectionTable", t)
 	if year == "" {
 		year = fmt.Sprintf("%d", time.Now().Year())
 	}
@@ -293,13 +322,13 @@ func AbuelosProjectionTable(year string, dataType string, isProduccion bool) ([]
 		log.Fatal(err)
 	}
 	cols := []string{"Day", "jan", "feb", "mar", "apr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dec"}
-	rows := [13][32]int64{}
+	rows := [13][32]int{}
 	filter := fmt.Sprintf("{'year':{'$gte': %d}}", y-2)
 	projections := ProjectAbuelos(filter)
 
 	for _, el := range projections {
 		if el.Year == y && el.EnProduccion == isProduccion {
-			rows[0][el.Day-1] = int64(el.Day)
+			rows[0][el.Day-1] = int(el.Day)
 			switch dataType {
 			case "aves":
 				rows[el.Month][el.Day-1] += el.Data.Aves
@@ -322,8 +351,10 @@ func AbuelosProjectionTable(year string, dataType string, isProduccion bool) ([]
 	return cols, rows
 }
 
-func bench(name string) {
-	fmt.Printf("%s Operation: %s - %v\n", instance, name, time.Since(time.Now()))
+func bench(name string, t time.Time) {
+	if config.IsBench {
+		fmt.Printf("%s Operation: %s - %v mili secs\n", instance, name, time.Since(t).Milliseconds())
+	}
 }
 
 func handleErr(err error) {
