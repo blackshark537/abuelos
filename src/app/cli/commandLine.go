@@ -3,6 +3,7 @@ package CommandLine
 import (
 	"errors"
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/blackshark537/dataprod/src/app/core"
@@ -217,7 +218,7 @@ func New() *cli.App {
 		Usage:   "print only the version",
 	}
 
-	AppName := color.MagentaString("Dataprod Core")
+	AppName := color.MagentaString(fmt.Sprintf("Dataprod Core Arch: %v", runtime.GOARCH))
 	AppDesc := color.MagentaString("A simple CLI program to manage your dataprod system")
 	return &cli.App{
 		Name:     AppName,

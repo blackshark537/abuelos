@@ -36,13 +36,14 @@ func (e *Empresa) GetDbPort() *portout.DbPort[Empresa] {
 	}
 }
 
-func (e *Empresa) Count(filters string) int64 {
-	count, err := e.GetDbPort().Count(filters)
-	if err != nil {
-		count = 0
-	}
-	return count
-}
+// Not Tested
+//func (e *Empresa) Count(filters string) int64 {
+//	count, err := e.GetDbPort().Count(filters)
+//	if err != nil {
+//		count = 0
+//	}
+//	return count
+//}
 
 func (e *Empresa) Save(geo *Geopoint) (interface{}, error) {
 	e.CreatedAt = time.Now()
@@ -64,20 +65,21 @@ func (e *Empresa) Delete(id string) error {
 	return e.GetDbPort().Delete(id)
 }
 
-func (e *Empresa) DeleteMany(filters string) error {
-	var err error = nil
-	results, err := e.GetAll(filters)
-	if err != nil {
-		return err
-	}
-	for _, el := range results {
-		err = el.Delete(el.Id.Hex())
-		if err != nil {
-			break
-		}
-	}
-	return err
-}
+// Not Tested
+//func (e *Empresa) DeleteMany(filters string) error {
+//	var err error = nil
+//	results, err := e.GetAll(filters)
+//	if err != nil {
+//		return err
+//	}
+//	for _, el := range results {
+//		err = el.Delete(el.Id.Hex())
+//		if err != nil {
+//			break
+//		}
+//	}
+//	return err
+//}
 
 func (e *Empresa) GetAll(filters string) ([]Empresa, error) {
 	return e.GetDbPort().GetAll(filters)

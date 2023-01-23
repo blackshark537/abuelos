@@ -36,13 +36,14 @@ func (l *Lote) GetDbPort() *portout.DbPort[Lote] {
 	}
 }
 
-func (l *Lote) Count(filters string) int64 {
-	count, err := l.GetDbPort().Count(filters)
-	if err != nil {
-		count = 0
-	}
-	return count
-}
+// Not Tested
+//func (l *Lote) Count(filters string) int64 {
+//	count, err := l.GetDbPort().Count(filters)
+//	if err != nil {
+//		count = 0
+//	}
+//	return count
+//}
 
 func (l *Lote) Save() (interface{}, error) {
 	l.CreatedAt = time.Now()

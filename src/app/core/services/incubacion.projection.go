@@ -7,6 +7,7 @@ import (
 )
 
 type Incubation struct {
+	Id          int
 	Fecha       time.Time
 	WeekDay     time.Weekday
 	Nacimientos int
@@ -23,15 +24,18 @@ func GetIncubations(year string) []Incubation {
 	date, err := time.Parse("2006-03-01", fmt.Sprintf("%d-01-01", _year))
 	handleErr(err)
 	results := []Incubation{}
+	id := 1
 	for m := 1; m < len(rows); m++ {
 		for d := 1; d < len(rows[0]); d++ {
 			if int64(date.Year()) != _year {
 				continue
 			}
+
 			if date.Weekday() > time.Monday && date.Weekday() <= time.Friday {
 				fri_acc += rows[date.Month()][date.Day()]
 				if date.Weekday() == time.Friday {
 					el := Incubation{
+						Id:          id,
 						Fecha:       date,
 						WeekDay:     date.Weekday(),
 						Nacimientos: fri_acc,
@@ -43,6 +47,7 @@ func GetIncubations(year string) []Incubation {
 				mon_acc += rows[date.Month()][date.Day()]
 				if date.Weekday() == time.Monday {
 					el := Incubation{
+						Id:          id,
 						Fecha:       date,
 						WeekDay:     date.Weekday(),
 						Nacimientos: mon_acc,
@@ -51,6 +56,7 @@ func GetIncubations(year string) []Incubation {
 					mon_acc = 0
 				}
 			}
+			id++
 			date = date.AddDate(0, 0, 1)
 		}
 	}

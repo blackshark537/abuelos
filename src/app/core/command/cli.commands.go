@@ -29,6 +29,10 @@ func (cmd *CliCommand) ListAbuelos(loteId string) {
 	services.ListAbuelos(loteId)
 }
 
+func (cmd *CliCommand) ListReproductoras(loteId string) {
+	services.ListReproductoras(loteId)
+}
+
 func (cmd *CliCommand) ListTable(filter string) error {
 	switch cmd.Collection {
 	case "empresas":
@@ -52,7 +56,8 @@ func (cmd *CliCommand) ProjectTable(year string, data string, prod bool) error {
 		services.LisIncubations(year)
 		return nil
 	case "reproductoras":
-		return noMatch()
+		services.ReprodTable(year, data, prod)
+		return nil
 	case "pollos":
 		return noMatch()
 	default:

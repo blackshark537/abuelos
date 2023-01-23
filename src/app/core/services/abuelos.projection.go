@@ -27,16 +27,19 @@ type DataProjected struct {
 }
 
 type LoteProjection struct {
-	Lote         int64
 	Fecha        time.Time
 	Semana       int8
 	Day          int16
 	Month        int8
-	Year         int64
 	EnProduccion bool
+	Year         int64
+	Lote         int64
 	StdProd      float32
 	StdApro      float32
 	StdNac       float32
+	StdProdReal  float32
+	StdAproReal  float32
+	StdNacReal   float32
 	Data         DataProjected
 }
 
@@ -48,41 +51,36 @@ type TableProjection struct {
 
 var cache map[string][]LoteProjection
 
-var _PROD = []float32{
+var ABU_PROD = []float32{
 	0, 8.40, 28.50, 48, 60.30, 69.70, 74.10, 77.50, 77.40, 77.10, 76.30, 74.80, 73.10, 71.40, 69.30, 67.20, 65.10, 63.30,
 	61.10, 59, 57.10, 55.30, 53.50, 51.60, 49.70, 48, 46.20, 44.80, 43.60, 42.40, 41.40, 40.50, 39.50, 38.60, 37.70, 36.80,
 	36, 35.10, 34.20, 33.30, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22,
 }
-var _APROV = []float32{
+var ABU_APROV = []float32{
 	0, 50, 78, 84, 88, 90, 92, 94, 94, 95, 95, 95, 95, 95, 95, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 95, 95, 95, 95, 95, 95,
 	94, 94, 94, 94, 94, 93, 93, 93, 93, 93, 93, 92, 92, 92, 92, 91, 91, 90,
 }
-var _NAC = []float32{
+var ABU_NAC = []float32{
 	0, 0, 55, 65, 70, 75, 80, 81, 82, 83, 83, 82, 82, 82, 81, 81, 81, 80, 80, 80, 80, 79, 79, 78, 78, 77, 77, 77, 76, 76, 75, 75, 74, 74,
 	73, 73, 72, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57,
 }
 
 const (
-	semanas_en_recria     = 24
-	semanas_en_produccion = 41
-	semanas_de_retardo    = 0
+	sem_en_recria = 24
 )
 
 var (
-	variable_mortalidad_recria          float32 = 4.0
-	variable_mortalidad_recria_ajustado float32 = 5.0
-
-	variable_mortalidad_produccion          float32 = 10.0
-	variable_mortalidad_produccion_ajustado float32 = 12.0
-
-	variable_produccion_huevos_totales float32 = 0
-	variable_aprovechamiento_huevos    float32 = 0
-	variable_NACimientos               float32 = 0
+	abu_sem_en_produccion     int     = 41
+	abu_var_mort_recria       float32 = 4.0
+	abu_var_mort_recria_ajust float32 = 5.0
+	abu_var_mort_prod         float32 = 10.0
+	abu_var_mort_prod_ajust   float32 = 12.0
+	abu_var_prod_huevos_total float32 = 0
+	abu_var_aprov_huevos      float32 = 0
+	abu_var_nacimientos       float32 = 0
 )
 
 var instance string = color.MagentaString("[Projection]:")
-
-type AbuelosProjection struct{}
 
 // [Warning] For CLI Use Only
 func ListAbuelos(lote string) {
@@ -126,18 +124,18 @@ func ProjectAbuelos(filters string) []LoteProjection {
 	projection := []LoteProjection{}
 
 	for _, lote := range lotes {
-		/* recriaCh := make(chan []LoteProjection, 500)
+		recriaCh := make(chan []LoteProjection, 500)
 		prodCh := make(chan []LoteProjection, 500)
 		go func() {
-			recriaCh <-
-		}() */
-		recria := getAbuelosRecria(lote)
-		/* go func() {
-			prodCh <-
-		}() */
-		produccion := getAbuelosProduccion(recria[len(recria)-1])
-		//close(prodCh)
-		//close(recriaCh)
+			recriaCh <- getAbuelosRecria(lote)
+		}()
+		recria := <-recriaCh
+		go func() {
+			prodCh <- getAbuelosProduccion(recria[len(recria)-1])
+		}()
+		produccion := <-prodCh
+		close(prodCh)
+		close(recriaCh)
 		projection = append(projection, recria...)
 		projection = append(projection, produccion...)
 	}
@@ -149,18 +147,10 @@ func ProjectAbuelos(filters string) []LoteProjection {
 func getAbuelosRecria(lote entities.Lote) []LoteProjection {
 	recrias := []LoteProjection{}
 	data := DataProjected{
-		Mortalidad:         100,
-		MortalidadReal:     100,
-		Aves:               int(lote.Hembras),
-		AvesReal:           int(lote.Hembras),
-		HvosProducidos:     0,
-		HvosProducidosReal: 0,
-		HvosIncubables:     0,
-		HvosIncubablesReal: 0,
-		Nacimientos:        0,
-		NacimientosReal:    0,
-		Pollitos:           0,
-		PollitosReal:       0,
+		Mortalidad:     100,
+		MortalidadReal: 100,
+		Aves:           int(lote.Hembras),
+		AvesReal:       int(lote.Hembras),
 	}
 	fecha, err := time.Parse("2006-01-02", lote.Entrada)
 	if err != nil {
@@ -183,7 +173,7 @@ func getAbuelosRecria(lote entities.Lote) []LoteProjection {
 	var percent float32 = 0
 	var percentReal float32 = 0
 
-	for i := 0; i < semanas_en_recria*7; i++ {
+	for i := 0; i < sem_en_recria*7; i++ {
 		if i%7 == 0 {
 			idx += 1
 		}
@@ -192,25 +182,17 @@ func getAbuelosRecria(lote entities.Lote) []LoteProjection {
 			percentReal = recrias[i].Data.MortalidadReal
 		}
 
-		mortality := percent - (variable_mortalidad_recria / float32(semanas_en_recria*7))
-		mortalityReal := percentReal - (variable_mortalidad_recria_ajustado / float32((semanas_en_recria * 7)))
+		mortality := percent - (abu_var_mort_recria / float32(sem_en_recria*7))
+		mortalityReal := percentReal - (abu_var_mort_recria_ajust / float32((sem_en_recria * 7)))
 
 		aves := float32(lote.Hembras) * mortality / 100.0
 		aves_real := float32(lote.Hembras) * mortalityReal / 100.0
 
 		data := DataProjected{
-			Mortalidad:         mortality,
-			MortalidadReal:     mortalityReal,
-			Aves:               int(aves),
-			AvesReal:           int(aves_real),
-			HvosProducidos:     0,
-			HvosProducidosReal: 0,
-			HvosIncubables:     0,
-			HvosIncubablesReal: 0,
-			Nacimientos:        0,
-			NacimientosReal:    0,
-			Pollitos:           0,
-			PollitosReal:       0,
+			Mortalidad:     mortality,
+			MortalidadReal: mortalityReal,
+			Aves:           int(aves),
+			AvesReal:       int(aves_real),
 		}
 		fecha = fecha.AddDate(0, 0, 1)
 
@@ -222,9 +204,6 @@ func getAbuelosRecria(lote entities.Lote) []LoteProjection {
 			Month:        int8(fecha.Month()),
 			Year:         int64(fecha.Year()),
 			EnProduccion: false,
-			StdProd:      0,
-			StdApro:      0,
-			StdNac:       0,
 			Data:         data,
 		}
 
@@ -236,14 +215,11 @@ func getAbuelosRecria(lote entities.Lote) []LoteProjection {
 func getAbuelosProduccion(lote LoteProjection) []LoteProjection {
 	produccion := []LoteProjection{}
 	var idx int8 = 0
-	fecha, err := time.Parse("2006-1-2", fmt.Sprintf("%d-%d-%d", lote.Year, lote.Month, lote.Day))
-	if err != nil {
-		handleErr(err)
-	}
+	fecha := lote.Fecha
 	var percent float32 = 100
 	var percentReal float32 = 100
 
-	for i := 0; i < semanas_en_produccion*7; i++ {
+	for i := 0; i < abu_sem_en_produccion*7; i++ {
 		if i%7 == 0 {
 			idx += 1
 		}
@@ -252,26 +228,26 @@ func getAbuelosProduccion(lote LoteProjection) []LoteProjection {
 			percentReal = produccion[i-1].Data.MortalidadReal
 		}
 
-		mortality := percent - (variable_mortalidad_produccion / float32(semanas_en_produccion*7))
-		mortalityReal := percentReal - (variable_mortalidad_produccion_ajustado / float32((semanas_en_produccion * 7)))
+		mortality := percent - (abu_var_mort_prod / float32(abu_sem_en_produccion*7))
+		mortalityReal := percentReal - (abu_var_mort_prod_ajust / float32((abu_sem_en_produccion * 7)))
 		aves := (float32(lote.Data.Aves) * mortality / 100)
 		aves_real := (float32(lote.Data.Aves) * mortalityReal / 100)
 
 		// Standar de produccion Real
-		std_prod := _PROD[idx] - (_PROD[idx] * variable_produccion_huevos_totales / 100)
+		std_prod := ABU_PROD[idx] - (ABU_PROD[idx] * abu_var_prod_huevos_total / 100)
 		// Standar de Aprovechamiento Real
-		std_aprov := _APROV[idx] - (_APROV[idx] * variable_aprovechamiento_huevos / 100)
+		std_aprov := ABU_APROV[idx] - (ABU_APROV[idx] * abu_var_aprov_huevos / 100)
 		// Standar de Nacimientos Real
-		std_NAC := _NAC[idx] - (_NAC[idx] * variable_NACimientos / 100)
+		std_nac := ABU_NAC[idx] - (ABU_NAC[idx] * abu_var_nacimientos / 100)
 
-		h_totales := aves * _PROD[idx] / 100
+		h_totales := aves * ABU_PROD[idx] / 100
 		h_totales_real := aves_real * std_prod / 100
 
-		h_incubables := h_totales * _APROV[idx] / 100
+		h_incubables := h_totales * ABU_APROV[idx] / 100
 		h_incubables_real := h_totales_real * std_aprov / 100
 
-		p_NACidos := h_incubables * _NAC[idx] / 100
-		p_NACidos_real := h_incubables_real * std_NAC / 100
+		p_NACidos := h_incubables * ABU_NAC[idx] / 100
+		p_NACidos_real := h_incubables_real * std_nac / 100
 
 		data := DataProjected{
 			Mortalidad:         mortality,
@@ -284,8 +260,6 @@ func getAbuelosProduccion(lote LoteProjection) []LoteProjection {
 			HvosIncubablesReal: int(h_incubables_real),
 			Nacimientos:        int(p_NACidos / 2),
 			NacimientosReal:    int(p_NACidos_real / 2),
-			Pollitos:           0,
-			PollitosReal:       0,
 		}
 		fecha = fecha.AddDate(0, 0, 1)
 
@@ -297,9 +271,12 @@ func getAbuelosProduccion(lote LoteProjection) []LoteProjection {
 			Month:        int8(fecha.Month()),
 			Year:         int64(fecha.Year()),
 			EnProduccion: true,
-			StdProd:      _PROD[idx],
-			StdApro:      _APROV[idx],
-			StdNac:       _NAC[idx],
+			StdProd:      ABU_PROD[idx],
+			StdApro:      ABU_APROV[idx],
+			StdNac:       ABU_NAC[idx],
+			StdProdReal:  std_prod,
+			StdAproReal:  std_aprov,
+			StdNacReal:   std_nac,
 			Data:         data,
 		}
 
@@ -323,7 +300,7 @@ func AbuelosProjectionTable(year string, dataType string, isProduccion bool) ([]
 	}
 	cols := []string{"Day", "jan", "feb", "mar", "apr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dec"}
 	rows := [13][32]int{}
-	filter := fmt.Sprintf("{'year':{'$gte': %d}}", y-2)
+	filter := fmt.Sprintf(`{"year":{"$gte": %d}}`, y-2)
 	projections := ProjectAbuelos(filter)
 
 	for _, el := range projections {
