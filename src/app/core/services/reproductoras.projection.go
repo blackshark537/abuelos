@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/rodaine/table"
 )
 
 var (
@@ -40,22 +41,26 @@ var REP_NAC = []float32{
 	51, 50, 49, 48, 47, 46, 45, 44,
 }
 
+var cache2 map[string][]LoteProjection = make(map[string][]LoteProjection)
+
 func ProjectReproductoras(year string) []LoteProjection {
 	t := time.Now()
 	defer bench("LoteProjection", t)
-	if cache[year] != nil {
-		return cache[year]
+	if cache2[year] != nil {
+		return cache2[year]
 	}
 	y, err := strconv.ParseInt(year, 10, 64)
 	handleErr(err)
+
 	lotes := GetIncubations(fmt.Sprint(y - 2))
 	lotes = append(lotes, GetIncubations(fmt.Sprint(y-1))...)
 	lotes = append(lotes, GetIncubations(year)...)
+
 	projection := []LoteProjection{}
 
 	for _, lote := range lotes {
-		recriaCh := make(chan []LoteProjection, 500)
-		prodCh := make(chan []LoteProjection, 500)
+		recriaCh := make(chan []LoteProjection, 5)
+		prodCh := make(chan []LoteProjection, 5)
 		go func() {
 			recriaCh <- getReprodRecria(lote)
 		}()
@@ -69,8 +74,7 @@ func ProjectReproductoras(year string) []LoteProjection {
 		projection = append(projection, recria...)
 		projection = append(projection, produccion...)
 	}
-	cache = make(map[string][]LoteProjection, len(projection))
-	cache[year] = projection
+	cache2[year] = projection
 	return projection
 }
 
@@ -225,7 +229,7 @@ func ReprodProjectionTable(year string, dataType string, isProduccion bool) ([]s
 	if err != nil {
 		log.Fatal(err)
 	}
-	cols := []string{"Day", "jan", "feb", "mar", "apr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dec"}
+	cols := []string{"Day", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dec"}
 	rows := [13][32]int{}
 
 	projections := ProjectReproductoras(fmt.Sprintf("%d", y))
@@ -273,12 +277,16 @@ func ListReproductoras(lote string) {
 // [Warning] For CLI Use Only
 func ReprodTable(year string, dataType string, isProduccion bool) {
 	cols, rows := ReprodProjectionTable(year, dataType, isProduccion)
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
+
+	tbl := table.New(cols[0], cols[1], cols[2], cols[3], cols[4], cols[5], cols[6], cols[7], cols[8], cols[9], cols[10], cols[11], cols[12])
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	fmt.Printf("Data: %s Year: %v\n", dataType, year)
-	fmt.Println("----------------------------------------------------------------------------------------------------------")
-	fmt.Printf("| %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t |\n", cols[0], cols[1], cols[2], cols[3], cols[4], cols[5], cols[6], cols[7], cols[8], cols[9], cols[10], cols[11], cols[12])
 	for d := 0; d < len(rows[0]); d++ {
-		fmt.Printf("| %v\t | %v | %v | %v | %v | %v | %v | %v | %v | %v | %v | %v | %v |\n", rows[0][d], rows[1][d], rows[2][d], rows[3][d], rows[4][d], rows[5][d], rows[6][d], rows[7][d], rows[8][d], rows[9][d], rows[10][d], rows[11][d], rows[12][d])
+		tbl.AddRow(rows[0][d], rows[1][d], rows[2][d], rows[3][d], rows[4][d], rows[5][d], rows[6][d], rows[7][d], rows[8][d], rows[9][d], rows[10][d], rows[11][d], rows[12][d])
 	}
-	fmt.Println("----------------------------------------------------------------------------------------------------------")
+
+	tbl.Print()
 }

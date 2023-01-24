@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/fatih/color"
+	"github.com/rodaine/table"
 )
 
 type Incubation struct {
@@ -65,11 +68,17 @@ func GetIncubations(year string) []Incubation {
 
 func LisIncubations(year string) {
 	incubations := GetIncubations(year)
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
+
+	tbl := table.New("Id", "Fecha", "Dia", "Incubaciones")
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 	days := map[time.Weekday]string{
 		1: "Lunes",
 		5: "Viernes",
 	}
 	for _, inc := range incubations {
-		fmt.Printf("%v - %s: %d\n", inc.Fecha.String(), days[inc.WeekDay], inc.Nacimientos)
+		tbl.AddRow(inc.Id, inc.Fecha.String(), days[inc.WeekDay], inc.Nacimientos)
 	}
+	tbl.Print()
 }

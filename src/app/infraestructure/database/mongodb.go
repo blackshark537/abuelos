@@ -27,17 +27,20 @@ type MongoDb struct {
 
 var ctx = context.TODO()
 var instance = color.MagentaString("[MongoDB]:")
+var client *mongo.Client = nil
 
 func (db *MongoDb) createClient() *mongo.Database {
-	clientOptions := options.Client().ApplyURI(db.Uri)
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-	handleErr(err)
-
-	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
+	if client == nil {
+		clientOptions := options.Client().ApplyURI(db.Uri)
+		_client, err := mongo.Connect(context.TODO(), clientOptions)
+		client = _client
 		handleErr(err)
-	}
 
-	fmt.Printf("%s Successfully connected\n", instance)
+		if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
+			handleErr(err)
+		}
+		fmt.Printf("%s Successfully connected\n", instance)
+	}
 	return client.Database(db.Name)
 }
 
@@ -63,7 +66,7 @@ func (db *MongoDb) Count() (int64, error) {
 	defer bench("Count", t)
 	db.isCollection()
 	count, err := db.Collection.CountDocuments(ctx, db.Filters)
-	defer db.close()
+
 	return count, err
 }
 
@@ -72,7 +75,7 @@ func (db *MongoDb) Create(object interface{}) (*mongo.InsertOneResult, error) {
 	defer bench("Create", t)
 	db.isCollection()
 	result, err := db.Collection.InsertOne(ctx, object)
-	defer db.close()
+
 	return result, err
 }
 
@@ -82,7 +85,7 @@ func (db *MongoDb) Find() *mongo.Cursor {
 	db.isCollection()
 	cursor, err := db.Collection.Find(ctx, db.Filters)
 	handleErr(err)
-	defer db.close()
+
 	return cursor
 }
 
@@ -90,7 +93,7 @@ func (db *MongoDb) FindOne() *mongo.SingleResult {
 	t := time.Now()
 	defer bench("FindOne", t)
 	db.isCollection()
-	defer db.close()
+
 	return db.Collection.FindOne(ctx, db.Filters)
 }
 
@@ -100,7 +103,7 @@ func (db *MongoDb) UpdateById(id string, entity interface{}) *mongo.SingleResult
 	objectId, err := primitive.ObjectIDFromHex(id)
 	handleErr(err)
 	db.isCollection()
-	defer db.close()
+
 	return db.Collection.FindOneAndUpdate(ctx, bson.M{"id": objectId}, bson.M{"$set": entity})
 }
 
@@ -110,7 +113,7 @@ func (db *MongoDb) DeleteById(id string) *mongo.SingleResult {
 	objectId, err := primitive.ObjectIDFromHex(id)
 	handleErr(err)
 	db.isCollection()
-	defer db.close()
+
 	return db.Collection.FindOneAndDelete(ctx, bson.M{"id": objectId})
 }
 
@@ -118,7 +121,7 @@ func (db *MongoDb) DeleteMany() *mongo.DeleteResult {
 	t := time.Now()
 	defer bench("DeleteMany", t)
 	db.isCollection()
-	defer db.close()
+
 	result, err := db.Collection.DeleteMany(ctx, db.Filters)
 	handleErr(err)
 	return result
@@ -128,7 +131,7 @@ func (db *MongoDb) InsertMany(documents []interface{}) *mongo.InsertManyResult {
 	t := time.Now()
 	defer bench("InsertMany", t)
 	db.isCollection()
-	defer db.close()
+
 	result, err := db.Collection.InsertMany(ctx, documents)
 	handleErr(err)
 	return result

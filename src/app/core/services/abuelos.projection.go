@@ -9,6 +9,7 @@ import (
 	"github.com/blackshark537/dataprod/src/app/core/config"
 	"github.com/blackshark537/dataprod/src/app/core/entities"
 	"github.com/fatih/color"
+	"github.com/rodaine/table"
 )
 
 type DataProjected struct {
@@ -100,14 +101,18 @@ func ListAbuelos(lote string) {
 // [Warning] For CLI Use Only
 func AbuelosTable(year string, dataType string, isProduccion bool) {
 	cols, rows := AbuelosProjectionTable(year, dataType, isProduccion)
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
 
+	tbl := table.New(cols[0], cols[1], cols[2], cols[3], cols[4], cols[5], cols[6], cols[7], cols[8], cols[9], cols[10], cols[11], cols[12])
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 	fmt.Printf("Data: %s Year: %v\n", dataType, year)
 	fmt.Println("----------------------------------------------------------------------------------------------------------")
-	fmt.Printf("| %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t | %v\t |\n", cols[0], cols[1], cols[2], cols[3], cols[4], cols[5], cols[6], cols[7], cols[8], cols[9], cols[10], cols[11], cols[12])
 	for d := 0; d < len(rows[0]); d++ {
-		fmt.Printf("| %v\t | %v | %v | %v | %v | %v | %v | %v | %v | %v | %v | %v | %v |\n", rows[0][d], rows[1][d], rows[2][d], rows[3][d], rows[4][d], rows[5][d], rows[6][d], rows[7][d], rows[8][d], rows[9][d], rows[10][d], rows[11][d], rows[12][d])
+		tbl.AddRow(rows[0][d], rows[1][d], rows[2][d], rows[3][d], rows[4][d], rows[5][d], rows[6][d], rows[7][d], rows[8][d], rows[9][d], rows[10][d], rows[11][d], rows[12][d])
 	}
-	fmt.Println("----------------------------------------------------------------------------------------------------------")
+
+	tbl.Print()
 }
 
 func ProjectAbuelos(filters string) []LoteProjection {
@@ -124,8 +129,8 @@ func ProjectAbuelos(filters string) []LoteProjection {
 	projection := []LoteProjection{}
 
 	for _, lote := range lotes {
-		recriaCh := make(chan []LoteProjection, 500)
-		prodCh := make(chan []LoteProjection, 500)
+		recriaCh := make(chan []LoteProjection, 5)
+		prodCh := make(chan []LoteProjection, 5)
 		go func() {
 			recriaCh <- getAbuelosRecria(lote)
 		}()
