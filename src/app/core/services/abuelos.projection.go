@@ -70,17 +70,6 @@ const (
 	sem_en_recria = 24
 )
 
-var (
-	abu_sem_en_produccion     int     = 44
-	abu_var_mort_recria       float32 = 4.0
-	abu_var_mort_recria_ajust float32 = 5.0
-	abu_var_mort_prod         float32 = 10.0
-	abu_var_mort_prod_ajust   float32 = 12.0
-	abu_var_prod_huevos_total float32 = 0
-	abu_var_aprov_huevos      float32 = 0
-	abu_var_nacimientos       float32 = 0
-)
-
 var instance string = color.MagentaString("[Projection]:")
 
 // [Warning] For CLI Use Only
@@ -122,6 +111,7 @@ func ProjectAbuelos(filters string) []LoteProjection {
 	if cache[filters] != nil {
 		return cache[filters]
 	}
+	LoadVariables(TipoAbuelos)
 	loteEntity := new(entities.Lote)
 	lotes, err := loteEntity.GetAll(filters)
 	if err != nil {

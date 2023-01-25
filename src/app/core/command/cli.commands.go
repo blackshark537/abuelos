@@ -18,11 +18,19 @@ type CliCommand struct {
 
 var emp *entities.Empresa = new(entities.Empresa)
 var lot *entities.Lote = new(entities.Lote)
+var vars *entities.Variable = new(entities.Variable)
+
 var instance = color.MagentaString("[CLI]:")
 
 func (cmd *CliCommand) ServerStart(port string) error {
 	fmt.Printf("%s Server Starting on port: %s\n", instance, port)
 	return new(portin.ApiAdapter).ForRoot(port)
+}
+
+func (cmd *CliCommand) SetVariables() {
+	services.CreateVariables(services.TipoAbuelos)
+	services.CreateVariables(services.TipoReproductoras)
+	services.CreateVariables(services.TipoPollos)
 }
 
 func (cmd *CliCommand) ListAbuelos(loteId string) {
@@ -40,6 +48,9 @@ func (cmd *CliCommand) ListTable(filter string) error {
 		return nil
 	case "lotes":
 		lot.List(filter)
+		return nil
+	case "variables":
+		vars.List(filter)
 		return nil
 	default:
 		return noMatch()

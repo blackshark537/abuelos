@@ -10,24 +10,6 @@ import (
 	"github.com/rodaine/table"
 )
 
-var (
-	rep_sem_en_produccion       int     = 44
-	rep_var_mort_recria         float32 = 5.0
-	rep_var_mort_recria_ajust   float32 = 7.0
-	rep_var_mort_prod           float32 = 10.0
-	rep_var_mort_prod_ajust     float32 = 13.0
-	rep_var_mort_pollitos       float32 = 10.72
-	rep_var_mort_pollitos_ajust float32 = 13.7
-	rep_var_prod_huevos_total   float32 = 11.75
-	rep_var_aprov_huevos        float32 = 1
-	rep_var_nacimientos         float32 = 3
-	var_venta_pollo_vivos       int     = 48
-	var_pollos_vivos_mataderos  int     = 52
-	var_lb_pollo_procesados     int     = 70
-	var_lb_pollo_matadero       int     = 52
-	var_peso_promedio           float32 = 4.8
-)
-
 var REP_PROD = []float32{
 	3, 20, 50, 82, 85, 86, 85.8, 84.8, 83.8, 82.8, 81.8, 80.8, 79.8, 78.8, 77.8, 76.7, 75.6, 74.5, 73.3, 72.1, 70.9,
 	69.7, 68.5, 67.3, 66.1, 64.9, 63.6, 62.3, 61, 59.6, 58.2, 56.8, 55.4, 54, 52.5, 51, 49.5, 47.9, 46.3, 44.7, 43.1,
@@ -58,6 +40,9 @@ func ProjectReproductoras(year string) []LoteProjection {
 	}
 	y, err := strconv.ParseInt(year, 10, 64)
 	handleErr(err)
+
+	LoadVariables(TipoReproductoras)
+	LoadVariables(TipoPollos)
 
 	lotes := GetIncubations(fmt.Sprint(y - 2))
 	lotes = append(lotes, GetIncubations(fmt.Sprint(y-1))...)

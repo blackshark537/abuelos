@@ -197,6 +197,12 @@ var Commands []*cli.Command = []*cli.Command{
 		},
 		Action: DeleteAll,
 	},
+	{
+		Name:    "SetVars",
+		Aliases: []string{"sv"},
+		Usage:   "Set and initialize all variables",
+		Action:  SetVariables,
+	},
 }
 
 // Create and returns the cli app instance
@@ -226,6 +232,11 @@ func New() *cli.App {
 		Usage:    AppDesc,
 		Commands: Commands,
 	}
+}
+
+func SetVariables(ctx *cli.Context) error {
+	cmds.SetVariables()
+	return nil
 }
 
 func serverStart(ctx *cli.Context) error {
