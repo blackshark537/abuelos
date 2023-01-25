@@ -11,9 +11,8 @@ import (
 )
 
 var (
-	rep_sem_en_produccion int     = 44
-	rep_var_mort_recria   float32 = 5.0
-
+	rep_sem_en_produccion       int     = 44
+	rep_var_mort_recria         float32 = 5.0
 	rep_var_mort_recria_ajust   float32 = 7.0
 	rep_var_mort_prod           float32 = 10.0
 	rep_var_mort_prod_ajust     float32 = 13.0
