@@ -11,14 +11,22 @@ import (
 )
 
 var (
-	rep_sem_en_produccion     int     = 44
-	rep_var_mort_recria       float32 = 5.0
-	rep_var_mort_recria_ajust float32 = 7.0
-	rep_var_mort_prod         float32 = 10.0
-	rep_var_mort_prod_ajust   float32 = 13.0
-	rep_var_prod_huevos_total float32 = 11.75
-	rep_var_aprov_huevos      float32 = 1
-	rep_var_nacimientos       float32 = 3
+	rep_sem_en_produccion int     = 44
+	rep_var_mort_recria   float32 = 5.0
+
+	rep_var_mort_recria_ajust   float32 = 7.0
+	rep_var_mort_prod           float32 = 10.0
+	rep_var_mort_prod_ajust     float32 = 13.0
+	rep_var_mort_pollitos       float32 = 10.72
+	rep_var_mort_pollitos_ajust float32 = 13.7
+	rep_var_prod_huevos_total   float32 = 11.75
+	rep_var_aprov_huevos        float32 = 1
+	rep_var_nacimientos         float32 = 3
+	var_venta_pollo_vivos       int     = 48
+	var_pollos_vivos_mataderos  int     = 52
+	var_lb_pollo_procesados     int     = 70
+	var_lb_pollo_matadero       int     = 52
+	var_peso_promedio           float32 = 4.8
 )
 
 var REP_PROD = []float32{
@@ -177,8 +185,8 @@ func getReprodProduccion(lote LoteProjection) []LoteProjection {
 		h_incubables := h_totales * REP_APROV[idx] / 100
 		h_incubables_real := h_totales_real * std_aprov / 100
 
-		p_NACidos := h_incubables * REP_NAC[idx] / 100
-		p_NACidos_real := h_incubables_real * std_nac / 100
+		p_nacidos := h_incubables * REP_NAC[idx] / 100
+		p_nacidos_real := h_incubables_real * std_nac / 100
 
 		data := DataProjected{
 			Mortalidad:         mortality,
@@ -189,8 +197,10 @@ func getReprodProduccion(lote LoteProjection) []LoteProjection {
 			HvosProducidosReal: int(h_totales_real),
 			HvosIncubables:     int(h_incubables),
 			HvosIncubablesReal: int(h_incubables_real),
-			Nacimientos:        int(p_NACidos / 2),
-			NacimientosReal:    int(p_NACidos_real / 2),
+			Nacimientos:        int(p_nacidos),
+			NacimientosReal:    int(p_nacidos_real),
+			Pollitos:           int(p_nacidos - (p_nacidos * rep_var_mort_pollitos / 100)),
+			PollitosReal:       int(p_nacidos_real - (p_nacidos_real * rep_var_mort_pollitos_ajust / 100)),
 		}
 		fecha = fecha.AddDate(0, 0, 1)
 
@@ -249,6 +259,32 @@ func ReprodProjectionTable(year string, dataType string, isProduccion bool) ([]s
 				break
 			case "nac":
 				rows[el.Month][el.Day-1] += el.Data.Nacimientos
+				break
+			case "pollos":
+				rows[el.Month][el.Day-1] += el.Data.Pollitos
+				break
+			case "vent-pollos-vivos":
+				rows[el.Month][el.Day-1] += el.Data.Pollitos * var_venta_pollo_vivos / 100
+				break
+			case "pollos-vivos-mat":
+				rows[el.Month][el.Day-1] += el.Data.Pollitos * var_pollos_vivos_mataderos / 100
+				break
+			case "libras-pollo":
+				rows[el.Month][el.Day-1] += int(float32(el.Data.Pollitos) * var_peso_promedio)
+				break
+			case "lb-pollo-proc":
+				rows[el.Month][el.Day-1] += int(float32(el.Data.Pollitos)*var_peso_promedio) * var_lb_pollo_procesados / 100
+				break
+			case "kl-pollo-proc":
+				lb := int(float32(el.Data.Pollitos)*var_peso_promedio) * var_lb_pollo_procesados / 100
+				rows[el.Month][el.Day-1] += int(float32(lb) / 2.20462)
+				break
+			case "tn-pollo-proc":
+				lb := int(float32(el.Data.Pollitos)*var_peso_promedio) * var_lb_pollo_procesados / 100
+				rows[el.Month][el.Day-1] += int(float32(lb) / (2.20462 * 1000))
+				break
+			case "lb-pollo-mat":
+				rows[el.Month][el.Day-1] += int(float32(el.Data.Pollitos)*var_peso_promedio) * var_lb_pollo_matadero / 100
 				break
 			default:
 				break

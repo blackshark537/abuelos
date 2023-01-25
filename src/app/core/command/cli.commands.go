@@ -59,7 +59,29 @@ func (cmd *CliCommand) ProjectTable(year string, data string, prod bool) error {
 		services.ReprodTable(year, data, prod)
 		return nil
 	case "pollos":
-		return noMatch()
+		services.ReprodTable(year, cmd.Collection, prod)
+		return nil
+	case "vent-pollos-vivos":
+		services.ReprodTable(year, cmd.Collection, prod)
+		return nil
+	case "pollos-vivos-mat":
+		services.ReprodTable(year, cmd.Collection, prod)
+		return nil
+	case "libras-pollo":
+		services.ReprodTable(year, cmd.Collection, prod)
+		return nil
+	case "lb-pollo-proc":
+		services.ReprodTable(year, cmd.Collection, prod)
+		return nil
+	case "kl-pollo-proc":
+		services.ReprodTable(year, cmd.Collection, prod)
+		return nil
+	case "tn-pollo-proc":
+		services.ReprodTable(year, cmd.Collection, prod)
+		return nil
+	case "lb-pollo-mat":
+		services.ReprodTable(year, cmd.Collection, prod)
+		return nil
 	default:
 		return noMatch()
 	}

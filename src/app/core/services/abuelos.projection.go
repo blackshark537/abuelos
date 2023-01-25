@@ -71,7 +71,7 @@ const (
 )
 
 var (
-	abu_sem_en_produccion     int     = 41
+	abu_sem_en_produccion     int     = 44
 	abu_var_mort_recria       float32 = 4.0
 	abu_var_mort_recria_ajust float32 = 5.0
 	abu_var_mort_prod         float32 = 10.0
@@ -87,15 +87,16 @@ var instance string = color.MagentaString("[Projection]:")
 func ListAbuelos(lote string) {
 	filters := fmt.Sprintf(`{"numero" : {"$eq": %v}}`, lote)
 	results := ProjectAbuelos(filters)
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
+	tbl := table.New("Lote", "Semanas", "Mortalidad %", "Aves", "Std Prod %", "Produccion", "Sta Aprov %", "Incubaciones", "Std Nac %", "Nacimientos")
 	fmt.Printf("%s %v Items\n", color.MagentaString("[Results]:"), len(results))
 	fmt.Printf("%s %v\n", color.MagentaString("[Lote]:"), lote)
-	fmt.Println("-------------------------------------------------------------------")
-	fmt.Println("| Lote\t | Sem\t | mortalidad\t | Aves\t | STD\t | Produc\t | STD\t | Incub | STD\t | Nac\t |")
-	fmt.Println("-------------------------------------------------------------------")
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 	for _, el := range results {
-		fmt.Printf("| %d\t | %f\t | %d\t | %f\t | %d\t  | %f\t | %d\t | %f\t | %d\t |\n", el.Semana, el.Data.Mortalidad, el.Data.Aves, el.StdProd, el.Data.HvosProducidos, el.StdApro, el.Data.HvosIncubables, el.StdNac, el.Data.Nacimientos)
+		tbl.AddRow(el.Lote, el.Semana, el.Data.Mortalidad, el.Data.Aves, el.StdProd, el.Data.HvosProducidos, el.StdApro, el.Data.HvosIncubables, el.StdNac, el.Data.Nacimientos)
 	}
-	fmt.Println("-------------------------------------------------------------------")
+	tbl.Print()
 }
 
 // [Warning] For CLI Use Only
@@ -107,7 +108,7 @@ func AbuelosTable(year string, dataType string, isProduccion bool) {
 	tbl := table.New(cols[0], cols[1], cols[2], cols[3], cols[4], cols[5], cols[6], cols[7], cols[8], cols[9], cols[10], cols[11], cols[12])
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 	fmt.Printf("Data: %s Year: %v\n", dataType, year)
-	fmt.Println("----------------------------------------------------------------------------------------------------------")
+	fmt.Println("--------------------------------------------------------------------")
 	for d := 0; d < len(rows[0]); d++ {
 		tbl.AddRow(rows[0][d], rows[1][d], rows[2][d], rows[3][d], rows[4][d], rows[5][d], rows[6][d], rows[7][d], rows[8][d], rows[9][d], rows[10][d], rows[11][d], rows[12][d])
 	}
@@ -307,7 +308,7 @@ func AbuelosProjectionTable(year string, dataType string, isProduccion bool) ([]
 	rows := [13][32]int{}
 	filter := fmt.Sprintf(`{"year":{"$gte": %d}}`, y-2)
 	projections := ProjectAbuelos(filter)
-
+	fmt.Printf("prj len: %v", len(projections))
 	for _, el := range projections {
 		if el.Year == y && el.EnProduccion == isProduccion {
 			rows[0][el.Day-1] = int(el.Day)
