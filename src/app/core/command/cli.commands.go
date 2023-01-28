@@ -24,7 +24,7 @@ var instance = color.MagentaString("[CLI]:")
 
 func (cmd *CliCommand) ServerStart(port string) error {
 	fmt.Printf("%s Server Starting on port: %s\n", instance, port)
-	return new(portin.ApiAdapter).ForRoot(port)
+	return new(portin.ApiPort).ForRoot(port)
 }
 
 func (cmd *CliCommand) SetVariables() {

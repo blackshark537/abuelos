@@ -55,7 +55,7 @@ func (db *MongoDb) SetFilters(f string) {
 	json.Unmarshal([]byte(f), &db.Filters)
 }
 
-func (db MongoDb) Where(prop string, cond string, value any) {
+func (db *MongoDb) Where(prop string, cond string, value any) {
 	db.Filters = bson.M{
 		prop: bson.M{cond: value},
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/blackshark537/dataprod/src/app/core/config"
 	"github.com/blackshark537/dataprod/src/app/infraestructure/database"
 )
 
@@ -14,16 +13,11 @@ type DbPort[t interface{}] struct {
 	Entities *[]t
 }
 
-type DbAdapter struct{}
-
 var mongodb *database.MongoDb = nil
 
-func (a *DbAdapter) ForRoot() {
+func InjectDatabase(db *database.MongoDb) {
 	if mongodb == nil {
-		mongodb = &database.MongoDb{
-			Uri:  config.DatabaseUri,
-			Name: config.DatabaseName,
-		}
+		mongodb = db
 	}
 }
 
