@@ -1,10 +1,7 @@
 package portout
 
 import (
-	"context"
 	"fmt"
-
-	"github.com/blackshark537/dataprod/src/app/infraestructure/database"
 )
 
 type DbPort[t interface{}] struct {
@@ -13,61 +10,74 @@ type DbPort[t interface{}] struct {
 	Entities *[]t
 }
 
-var mongodb *database.MongoDb = nil
+type Database interface {
+	SelectTable(table string)
+	SetFilters(f string)
+	Where(prop string, cond string, value any)
+	Count() (int64, error)
+	Create(object interface{}) (interface{}, error)
+	Find(entity interface{}) error
+	FindOne(entity interface{}) error
+	UpdateById(id string, entity interface{}) error
+	DeleteById(id string) error
+	DeleteMany() interface{}
+	InsertMany(documents []interface{}) interface{}
+}
 
-func InjectDatabase(db *database.MongoDb) {
-	if mongodb == nil {
-		mongodb = db
+var database Database = nil
+
+func InjectDatabase(db Database) {
+	if database == nil {
+		database = db
 	}
 }
 
 func (port *DbPort[t]) Count(filters string) (int64, error) {
-	mongodb.SetFilters(filters)
-	count, err := mongodb.Count()
+	database.SetFilters(filters)
+	count, err := database.Count()
 	return count, err
 }
 
 func (port *DbPort[t]) Save() (interface{}, error) {
-	mongodb.SelectTable(port.Name)
-	return mongodb.Create(port.Entity)
+	database.SelectTable(port.Name)
+	return database.Create(port.Entity)
 }
 
 func (port *DbPort[t]) InsetMany(documents []interface{}) interface{} {
-	mongodb.SelectTable(port.Name)
-	return mongodb.InsertMany(documents)
+	database.SelectTable(port.Name)
+	return database.InsertMany(documents)
 }
 
 func (port *DbPort[t]) Update(id string) error {
-	mongodb.SelectTable(port.Name)
-	result := mongodb.UpdateById(id, port.Entity)
-	return result.Err()
+	database.SelectTable(port.Name)
+	result := database.UpdateById(id, port.Entity)
+	return result
 }
 
 func (port *DbPort[t]) GetAll(filters string) ([]t, error) {
-	mongodb.SelectTable(port.Name)
-	mongodb.SetFilters(filters)
+	database.SelectTable(port.Name)
+	database.SetFilters(filters)
 	var results []t
-	cursor := mongodb.Find()
-	err := cursor.All(context.TODO(), &results)
+	err := database.Find(&results)
 	return results, err
 }
 
 func (port *DbPort[t]) FindOne(filters string) error {
-	mongodb.SelectTable(port.Name)
-	mongodb.SetFilters(filters)
-	result := mongodb.FindOne()
-	return result.Decode(&port.Entity)
+	database.SelectTable(port.Name)
+	database.SetFilters(filters)
+	result := database.FindOne(&port.Entity)
+	return result
 }
 
 func (port *DbPort[t]) Delete(id string) error {
-	mongodb.SelectTable(port.Name)
-	result := mongodb.DeleteById(id)
-	return result.Err()
+	database.SelectTable(port.Name)
+	result := database.DeleteById(id)
+	return result
 }
 
 func (port *DbPort[t]) DeleteMany(ids []string) interface{} {
-	mongodb.SelectTable(port.Name)
-	mongodb.SetFilters(fmt.Sprintf("{'id': { '$eq': [%s] } }", ids))
-	result := mongodb.DeleteMany()
+	database.SelectTable(port.Name)
+	database.SetFilters(fmt.Sprintf("{'id': { '$eq': [%s] } }", ids))
+	result := database.DeleteMany()
 	return result
 }

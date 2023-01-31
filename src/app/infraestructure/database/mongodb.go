@@ -70,7 +70,7 @@ func (db *MongoDb) Count() (int64, error) {
 	return count, err
 }
 
-func (db *MongoDb) Create(object interface{}) (*mongo.InsertOneResult, error) {
+func (db *MongoDb) Create(object interface{}) (interface{}, error) {
 	t := time.Now()
 	defer bench("Create", t)
 	db.isCollection()
@@ -79,45 +79,47 @@ func (db *MongoDb) Create(object interface{}) (*mongo.InsertOneResult, error) {
 	return result, err
 }
 
-func (db *MongoDb) Find() *mongo.Cursor {
+func (db *MongoDb) Find(entity interface{}) error {
 	t := time.Now()
 	defer bench("FindAll", t)
 	db.isCollection()
 	cursor, err := db.Collection.Find(ctx, db.Filters)
 	handleErr(err)
-
-	return cursor
+	return cursor.All(ctx, entity)
 }
 
-func (db *MongoDb) FindOne() *mongo.SingleResult {
+func (db *MongoDb) FindOne(entity interface{}) error {
 	t := time.Now()
 	defer bench("FindOne", t)
 	db.isCollection()
 
-	return db.Collection.FindOne(ctx, db.Filters)
+	res := db.Collection.FindOne(ctx, db.Filters)
+	return res.Decode(entity)
 }
 
-func (db *MongoDb) UpdateById(id string, entity interface{}) *mongo.SingleResult {
+func (db *MongoDb) UpdateById(id string, entity interface{}) error {
 	t := time.Now()
 	defer bench("UpdateById", t)
 	objectId, err := primitive.ObjectIDFromHex(id)
 	handleErr(err)
 	db.isCollection()
 
-	return db.Collection.FindOneAndUpdate(ctx, bson.M{"id": objectId}, bson.M{"$set": entity})
+	result := db.Collection.FindOneAndUpdate(ctx, bson.M{"id": objectId}, bson.M{"$set": entity})
+	return result.Err()
 }
 
-func (db *MongoDb) DeleteById(id string) *mongo.SingleResult {
+func (db *MongoDb) DeleteById(id string) error {
 	t := time.Now()
 	defer bench("DeleteById", t)
 	objectId, err := primitive.ObjectIDFromHex(id)
 	handleErr(err)
 	db.isCollection()
 
-	return db.Collection.FindOneAndDelete(ctx, bson.M{"id": objectId})
+	result := db.Collection.FindOneAndDelete(ctx, bson.M{"id": objectId})
+	return result.Err()
 }
 
-func (db *MongoDb) DeleteMany() *mongo.DeleteResult {
+func (db *MongoDb) DeleteMany() interface{} {
 	t := time.Now()
 	defer bench("DeleteMany", t)
 	db.isCollection()
@@ -127,7 +129,7 @@ func (db *MongoDb) DeleteMany() *mongo.DeleteResult {
 	return result
 }
 
-func (db *MongoDb) InsertMany(documents []interface{}) *mongo.InsertManyResult {
+func (db *MongoDb) InsertMany(documents []interface{}) interface{} {
 	t := time.Now()
 	defer bench("InsertMany", t)
 	db.isCollection()

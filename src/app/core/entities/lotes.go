@@ -22,7 +22,7 @@ type Lote struct {
 	Year      int64              `json:"year" xml:"year" form:"year"`
 	Empresa   string             `json:"empresa" xml:"empresa" form:"empresa" validate:"required, min=10, max=100"`
 	Hembras   int32              `json:"hembras" xml:"hembras" form:"hembras" validate:"required, number, min=0"`
-	Machos    int32              `json:"Machos" xml:"Machos" form:"Machos" validate:"required, number, min=0"`
+	Machos    int32              `json:"machos" xml:"machos" form:"machos" validate:"required, number, min=0"`
 	Tipo      string             `json:"tipo" xml:"tipo" form:"tipo"  validate:"required,min=1,max=25"`
 }
 
