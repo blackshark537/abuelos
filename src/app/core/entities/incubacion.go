@@ -10,8 +10,8 @@ var TpMaquina []string = []string{"incubadora", "ponedora"}
 
 type Maquina struct {
 	Id        primitive.ObjectID `json:"id" xml:"id" form:"id"`
-	CreatedAt time.Time          `json:"CreatedAt" xml:"CreatedAt" form:"CreatedAt"`
-	UpdatedAt time.Time          `json:"UpdatedAt" xml:"UpdatedAt" form:"UpdatedAt"`
+	CreatedAt time.Time          `json:"createdAt" xml:"createdAt" form:"createdAt"`
+	UpdatedAt time.Time          `json:"updatedAt" xml:"updatedAt" form:"updatedAt"`
 	Numero    int16              `json:"numero" xml:"numero" form:"numero"`
 	Marca     string             `json:"marca" xml:"marca" form:"marca"`
 	Modelo    string             `json:"modelo" xml:"modelo" form:"modelo"`
@@ -21,8 +21,8 @@ type Maquina struct {
 
 type Incubacion struct {
 	Id         primitive.ObjectID `json:"id" xml:"id" form:"id"`
-	CreatedAt  time.Time          `json:"CreatedAt" xml:"CreatedAt" form:"CreatedAt"`
-	UpdatedAt  time.Time          `json:"UpdatedAt" xml:"UpdatedAt" form:"UpdatedAt"`
+	CreatedAt  time.Time          `json:"createdAt" xml:"createdAt" form:"createdAt"`
+	UpdatedAt  time.Time          `json:"updatedAt" xml:"updatedAt" form:"updatedAt"`
 	Lote       string             `json:"lote" xml:"lote" form:"lote"`
 	Numero     int64              `json:"numero" xml:"numero" form:"numero"`
 	Fecha      time.Time          `json:"fecha" xml:"fecha" form:"fecha"`

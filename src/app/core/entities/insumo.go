@@ -16,13 +16,13 @@ const (
 
 type Insumo struct {
 	Id        primitive.ObjectID `json:"id" xml:"id" form:"id"`
-	CreatedAt time.Time          `json:"CreatedAt" xml:"CreatedAt" form:"CreatedAt"`
-	UpdatedAt time.Time          `json:"UpdatedAt" xml:"UpdatedAt" form:"UpdatedAt"`
-	Nombre    string
-	Unidad    string
-	Precio    int64
-	Cantidad  int64
-	Tipo      uint8
+	CreatedAt time.Time          `json:"createdAt" xml:"createdAt" form:"createdAt"`
+	UpdatedAt time.Time          `json:"updatedAt" xml:"updatedAt" form:"updatedAt"`
+	Nombre    string             `json:"nombre" xml:"nombre" form:"nombre"`
+	Unidad    string             `json:"unidad" xml:"unidad" form:"unidad"`
+	Precio    int64              `json:"precio" xml:"precio" form:"precio"`
+	Cantidad  int64              `json:"cantidad" xml:"cantidad" form:"cantidad"`
+	Tipo      uint8              `json:"tipo" xml:"tipo" form:"tipo"`
 }
 
 /****************************************************************************

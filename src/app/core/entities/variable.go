@@ -17,8 +17,8 @@ type Ajuste struct {
 
 type Variable struct {
 	Id                           primitive.ObjectID `json:"id" xml:"id" form:"id"`
-	CreatedAt                    time.Time          `json:"CreatedAt" xml:"CreatedAt" form:"CreatedAt"`
-	UpdatedAt                    time.Time          `json:"UpdatedAt" xml:"UpdatedAt" form:"UpdatedAt"`
+	CreatedAt                    time.Time          `json:"createdAt" xml:"createdAt" form:"createdAt"`
+	UpdatedAt                    time.Time          `json:"updatedAt" xml:"updatedAt" form:"updatedAt"`
 	SemanasVida                  int                `json:"semanas_vida" xml:"semanas_vida" form:"semanas_vida"`
 	MortalidadRecria             float32            `json:"mortalidad_recria" xml:"mortalidad_recria" form:"mortalidad_recria"`
 	MortalidadRecriaAjustado     []Ajuste           `json:"mortalidad_recria_ajustado" xml:"mortalidad_recria_ajustado" form:"mortalidad_recria_ajustado"`

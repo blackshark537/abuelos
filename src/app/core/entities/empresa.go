@@ -12,8 +12,8 @@ import (
 
 type Empresa struct {
 	Id         primitive.ObjectID `json:"id" xml:"id" form:"id"`
-	CreatedAt  time.Time          `json:"CreatedAt" xml:"CreatedAt" form:"CreatedAt"`
-	UpdatedAt  time.Time          `json:"UpdatedAt" xml:"UpdatedAt" form:"UpdatedAt"`
+	CreatedAt  time.Time          `json:"createdAt" xml:"createdAt" form:"createdAt"`
+	UpdatedAt  time.Time          `json:"updatedAt" xml:"updatedAt" form:"updatedAt"`
 	Nombre     string             `json:"nombre" xml:"nombre" form:"nombre" validate:"required,min=10,max=100"`
 	Direccion  string             `json:"direccion" xml:"direccion" form:"direccion"  validate:"required,min=10,max=100"`
 	Provincia  string             `json:"provincia" xml:"provincia" form:"provincia"`

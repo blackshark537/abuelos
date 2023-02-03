@@ -14,8 +14,8 @@ import (
 
 type Lote struct {
 	Id        primitive.ObjectID `json:"id" xml:"id" form:"id"`
-	CreatedAt time.Time          `json:"CreatedAt" xml:"CreatedAt" form:"CreatedAt"`
-	UpdatedAt time.Time          `json:"UpdatedAt" xml:"UpdatedAt" form:"UpdatedAt"`
+	CreatedAt time.Time          `json:"createdAt" xml:"createdAt" form:"createdAt"`
+	UpdatedAt time.Time          `json:"updatedAt" xml:"updatedAt" form:"updatedAt"`
 	Numero    int64              `json:"numero" xml:"numero" form:"numero" validate:"required, number"`
 	Entrada   string             `json:"entrada" xml:"entrada" form:"entrada" validate:"required"`
 	Month     int64              `json:"month" xml:"month" form:"month"`
