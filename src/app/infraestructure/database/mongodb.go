@@ -70,6 +70,10 @@ func (db *MongoDb) Count() (int64, error) {
 	return count, err
 }
 
+func (db *MongoDb) GenerateId() interface{} {
+	return primitive.NewObjectID()
+}
+
 func (db *MongoDb) Create(object interface{}) (interface{}, error) {
 	t := time.Now()
 	defer bench("Create", t)

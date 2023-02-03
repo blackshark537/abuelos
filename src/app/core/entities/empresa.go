@@ -65,21 +65,20 @@ func (e *Empresa) Delete(id string) error {
 	return e.GetDbPort().Delete(id)
 }
 
-// Not Tested
-//func (e *Empresa) DeleteMany(filters string) error {
-//	var err error = nil
-//	results, err := e.GetAll(filters)
-//	if err != nil {
-//		return err
-//	}
-//	for _, el := range results {
-//		err = el.Delete(el.Id.Hex())
-//		if err != nil {
-//			break
-//		}
-//	}
-//	return err
-//}
+func (e *Empresa) DeleteMany(filters string) error {
+	var err error = nil
+	results, err := e.GetAll(filters)
+	if err != nil {
+		return err
+	}
+	for _, el := range results {
+		err = el.Delete(el.Id.Hex())
+		if err != nil {
+			break
+		}
+	}
+	return err
+}
 
 func (e *Empresa) GetAll(filters string) ([]Empresa, error) {
 	return e.GetDbPort().GetAll(filters)
