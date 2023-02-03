@@ -1,19 +1,19 @@
 package portin
 
-import (
-	api "github.com/blackshark537/dataprod/src/app/Api"
-)
+type ApiGateway interface {
+	ForRoot(port string) error
+}
 
 type ApiPort struct{}
 
-var rest *api.API = nil
+var apiGateway ApiGateway = nil
 
-func InjectApi(a *api.API) {
-	if rest == nil {
-		rest = a
+func InjectApi(gateway ApiGateway) {
+	if apiGateway == nil {
+		apiGateway = gateway
 	}
 }
 
-func (ap *ApiPort) ForRoot(port string) error {
-	return rest.ForRoot(port)
+func (apiPort *ApiPort) ForRoot(port string) error {
+	return apiGateway.ForRoot(port)
 }
