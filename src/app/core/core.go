@@ -12,15 +12,18 @@ import (
 )
 
 func ForRoot() {
-	config.DatabaseUri = "mongodb://localhost:27017"
-	dbName := config.DatabaseName
-	if dbName == "" {
-		fmt.Printf("Invalid Enviroment DB_NAME %v\n", dbName)
+	if config.DatabaseName == "" {
+		fmt.Printf("Invalid Enviroment DB_NAME %v\n", config.DatabaseName)
 		os.Exit(1)
 	}
-	portin.InjectApi(new(api.API))
-	portout.InjectDatabase(&database.MongoDb{
-		Uri:  config.DatabaseUri,
-		Name: config.DatabaseName,
-	})
+	portout.InjectDatabase(
+		&database.MongoDb{
+			Uri:  config.DatabaseUri,
+			Name: config.DatabaseName,
+		},
+	)
+
+	portin.InjectApi(
+		new(api.API),
+	)
 }
