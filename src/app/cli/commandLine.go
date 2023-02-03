@@ -6,7 +6,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/blackshark537/dataprod/src/app/core"
 	core_command "github.com/blackshark537/dataprod/src/app/core/command"
 	"github.com/blackshark537/dataprod/src/app/core/config"
 	"github.com/fatih/color"
@@ -207,7 +206,6 @@ var Commands []*cli.Command = []*cli.Command{
 
 // Create and returns the cli app instance
 func New() *cli.App {
-	core.ForRoot()
 	website := color.CyanString("WEBSITE: https://dataprod.cloud")
 	support := color.GreenString("SUPPORT: support@dataprod.cloud")
 	cli.AppHelpTemplate = fmt.Sprintf(`%s
