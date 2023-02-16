@@ -11,7 +11,7 @@ type DbPort[t interface{}] struct {
 }
 
 type Database interface {
-	GenerateId() interface{}
+	NewId() interface{}
 	SelectTable(table string)
 	SetFilters(f string)
 	Where(prop string, cond string, value any)
@@ -33,8 +33,8 @@ func InjectDatabase(db Database) {
 	}
 }
 
-func (port *DbPort[t]) GenerateId() interface{} {
-	return database.GenerateId()
+func (port *DbPort[t]) NewId() interface{} {
+	return database.NewId()
 }
 
 func (port *DbPort[t]) Count(filters string) (int64, error) {

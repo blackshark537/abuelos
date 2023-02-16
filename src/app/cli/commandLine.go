@@ -208,7 +208,16 @@ var Commands []*cli.Command = []*cli.Command{
 func New() *cli.App {
 	website := color.CyanString("WEBSITE: https://dataprod.cloud")
 	support := color.GreenString("SUPPORT: support@dataprod.cloud")
-	cli.AppHelpTemplate = fmt.Sprintf(`%s
+	cli.AppHelpTemplate = fmt.Sprintf(`
+	██████╗  █████╗ ████████╗ █████╗       ██████╗ ██████╗  ██████╗ ██████╗ 
+	██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗      ██╔══██╗██╔══██╗██╔═══██╗██╔══██╗
+	██║  ██║███████║   ██║   ███████║█████╗██████╔╝██████╔╝██║   ██║██║  ██║
+	██║  ██║██╔══██║   ██║   ██╔══██║╚════╝██╔═══╝ ██╔══██╗██║   ██║██║  ██║
+	██████╔╝██║  ██║   ██║   ██║  ██║      ██║     ██║  ██║╚██████╔╝██████╔╝
+	╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝      ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ 
+																			
+
+	%s
 
 	%s
 	

@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -9,21 +10,20 @@ import (
 	portout "github.com/blackshark537/dataprod/src/app/core/port_out"
 
 	"github.com/fatih/color"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Lote struct {
-	Id        primitive.ObjectID `json:"id" xml:"id" form:"id"`
-	CreatedAt time.Time          `json:"createdAt" xml:"createdAt" form:"createdAt"`
-	UpdatedAt time.Time          `json:"updatedAt" xml:"updatedAt" form:"updatedAt"`
-	Numero    int64              `json:"numero" xml:"numero" form:"numero" validate:"required, number"`
-	Entrada   string             `json:"entrada" xml:"entrada" form:"entrada" validate:"required"`
-	Month     int64              `json:"month" xml:"month" form:"month"`
-	Year      int64              `json:"year" xml:"year" form:"year"`
-	Empresa   string             `json:"empresa" xml:"empresa" form:"empresa" validate:"required, min=10, max=100"`
-	Hembras   int32              `json:"hembras" xml:"hembras" form:"hembras" validate:"required, number, min=0"`
-	Machos    int32              `json:"machos" xml:"machos" form:"machos" validate:"required, number, min=0"`
-	Tipo      string             `json:"tipo" xml:"tipo" form:"tipo"  validate:"required,min=1,max=25"`
+	Id        interface{} `json:"id" xml:"id" form:"id"`
+	CreatedAt time.Time   `json:"createdAt" xml:"createdAt" form:"createdAt"`
+	UpdatedAt time.Time   `json:"updatedAt" xml:"updatedAt" form:"updatedAt"`
+	Numero    int64       `json:"numero" xml:"numero" form:"numero" validate:"required, number"`
+	Entrada   string      `json:"entrada" xml:"entrada" form:"entrada" validate:"required"`
+	Month     int64       `json:"month" xml:"month" form:"month"`
+	Year      int64       `json:"year" xml:"year" form:"year"`
+	Empresa   string      `json:"empresa" xml:"empresa" form:"empresa" validate:"required, min=10, max=100"`
+	Hembras   int32       `json:"hembras" xml:"hembras" form:"hembras" validate:"required, number, min=0"`
+	Machos    int32       `json:"machos" xml:"machos" form:"machos" validate:"required, number, min=0"`
+	Tipo      string      `json:"tipo" xml:"tipo" form:"tipo"  validate:"required,min=1,max=25"`
 }
 
 /****************************************************************************
@@ -37,18 +37,18 @@ func (l *Lote) GetDbPort() *portout.DbPort[Lote] {
 }
 
 // Not Tested
-//func (l *Lote) Count(filters string) int64 {
-//	count, err := l.GetDbPort().Count(filters)
-//	if err != nil {
-//		count = 0
-//	}
-//	return count
-//}
+func (l *Lote) Count(filters string) int64 {
+	count, err := l.GetDbPort().Count(filters)
+	if err != nil {
+		count = 0
+	}
+	return count
+}
 
 func (l *Lote) Save() (interface{}, error) {
 	l.CreatedAt = time.Now()
 	l.UpdatedAt = time.Now()
-	l.Id = primitive.NewObjectID()
+	l.Id = l.GetDbPort().NewId()
 	month, err := strconv.ParseInt(strings.Split(l.Entrada, "-")[1], 10, 64)
 	l.Month = month
 	year, err := strconv.ParseInt(strings.Split(l.Entrada, "-")[0], 10, 64)
@@ -68,18 +68,7 @@ func (l *Lote) Delete(id string) error {
 }
 
 func (l *Lote) DeleteMany(filters string) error {
-	var err error = nil
-	results, err := l.GetAll(filters)
-	if err != nil {
-		return err
-	}
-	for _, el := range results {
-		err = el.Delete(el.Id.Hex())
-		if err != nil {
-			break
-		}
-	}
-	return err
+	return errors.New("Not implemented")
 }
 
 func (l *Lote) GetAll(filters string) ([]Lote, error) {

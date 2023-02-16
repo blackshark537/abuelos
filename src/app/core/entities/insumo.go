@@ -1,12 +1,12 @@
 package entities
 
 import (
+	"errors"
 	"time"
 
 	portout "github.com/blackshark537/dataprod/src/app/core/port_out"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const (
@@ -15,14 +15,14 @@ const (
 )
 
 type Insumo struct {
-	Id        primitive.ObjectID `json:"id" xml:"id" form:"id"`
-	CreatedAt time.Time          `json:"createdAt" xml:"createdAt" form:"createdAt"`
-	UpdatedAt time.Time          `json:"updatedAt" xml:"updatedAt" form:"updatedAt"`
-	Nombre    string             `json:"nombre" xml:"nombre" form:"nombre"`
-	Unidad    string             `json:"unidad" xml:"unidad" form:"unidad"`
-	Precio    int64              `json:"precio" xml:"precio" form:"precio"`
-	Cantidad  int64              `json:"cantidad" xml:"cantidad" form:"cantidad"`
-	Tipo      uint8              `json:"tipo" xml:"tipo" form:"tipo"`
+	Id        interface{} `json:"id" xml:"id" form:"id"`
+	CreatedAt time.Time   `json:"createdAt" xml:"createdAt" form:"createdAt"`
+	UpdatedAt time.Time   `json:"updatedAt" xml:"updatedAt" form:"updatedAt"`
+	Nombre    string      `json:"nombre" xml:"nombre" form:"nombre"`
+	Unidad    string      `json:"unidad" xml:"unidad" form:"unidad"`
+	Precio    int64       `json:"precio" xml:"precio" form:"precio"`
+	Cantidad  int64       `json:"cantidad" xml:"cantidad" form:"cantidad"`
+	Tipo      uint8       `json:"tipo" xml:"tipo" form:"tipo"`
 }
 
 /****************************************************************************
@@ -39,7 +39,7 @@ func (i *Insumo) GetDbPort() *portout.DbPort[Insumo] {
 func (i *Insumo) Save() (interface{}, error) {
 	i.CreatedAt = time.Now()
 	i.UpdatedAt = time.Now()
-	i.Id = primitive.NewObjectID()
+	i.Id = i.GetDbPort().NewId()
 	return i.GetDbPort().Save()
 }
 
@@ -52,18 +52,7 @@ func (i *Insumo) Delete(id string) error {
 }
 
 func (i *Insumo) DeleteMany(filters string) error {
-	var err error = nil
-	results, err := i.GetAll(filters)
-	if err != nil {
-		return err
-	}
-	for _, el := range results {
-		err = el.Delete(el.Id.Hex())
-		if err != nil {
-			break
-		}
-	}
-	return err
+	return errors.New("Not Implemented")
 }
 
 // Queries
@@ -87,7 +76,7 @@ func (i *Insumo) List(filter string) {
 		if el.Tipo > 0 {
 			Tipo = "Macro"
 		}
-		tbl.AddRow(el.Id.Hex(), el.Nombre, el.Cantidad/100, el.Unidad, el.Precio/100, Tipo, el.CreatedAt.String())
+		tbl.AddRow(el.Id, el.Nombre, el.Cantidad/100, el.Unidad, el.Precio/100, Tipo, el.CreatedAt.String())
 	}
 	tbl.Print()
 }

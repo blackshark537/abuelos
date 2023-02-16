@@ -70,7 +70,7 @@ func (db *MongoDb) Count() (int64, error) {
 	return count, err
 }
 
-func (db *MongoDb) GenerateId() interface{} {
+func (db *MongoDb) NewId() interface{} {
 	return primitive.NewObjectID()
 }
 
