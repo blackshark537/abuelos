@@ -1,8 +1,8 @@
 package core
 
 import (
-	portin "github.com/blackshark537/dataprod/src/app/core/port_in"
-	portout "github.com/blackshark537/dataprod/src/app/core/port_out"
+	portin "github.com/blackshark537/abuelos/src/app/core/port_in"
+	portout "github.com/blackshark537/abuelos/src/app/core/port_out"
 )
 
 type Core struct{}

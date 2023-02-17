@@ -14,7 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
-	"github.com/blackshark537/dataprod/src/app/core/config"
+	"github.com/blackshark537/abuelos/src/app/core/config"
 	"github.com/fatih/color"
 )
 

@@ -3,7 +3,7 @@ package services_test
 import (
 	"testing"
 
-	"github.com/blackshark537/dataprod/src/app/core/services"
+	"github.com/blackshark537/abuelos/src/app/core/services"
 	"github.com/stretchr/testify/assert"
 )
 

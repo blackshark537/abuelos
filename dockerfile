@@ -10,11 +10,15 @@ RUN go mod download
 COPY ./src ./src
 COPY *.go ./
 
-RUN go build -o /dataprod
-#RUN CGO_ENABLED=0 go build -ldflags=”-s -w” -o /dataprod
+RUN go build -o /abuelos
+#RUN CGO_ENABLED=0 go build -ldflags=”-s -w” -o /abuelos
 
-FROM --platform=amd64 golang:alpine
+FROM --platform=amd64 alpine:latest
 WORKDIR /root/
-COPY --from=builder /dataprod /
+COPY --from=builder /abuelos /
 
-CMD [ "/dataprod", "serve" ]
+#EXPOSE 3000
+
+#USER nonroot:nonroot
+
+CMD [ "/abuelos", "serve" ]

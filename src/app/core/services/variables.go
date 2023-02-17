@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/blackshark537/dataprod/src/app/core/entities"
+	"github.com/blackshark537/abuelos/src/app/core/entities"
 )
 
 const (

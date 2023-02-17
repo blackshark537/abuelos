@@ -4,11 +4,11 @@ import (
 	"log"
 	"os"
 
-	api "github.com/blackshark537/dataprod/src/app/Api"
-	CommandLine "github.com/blackshark537/dataprod/src/app/cli"
-	core "github.com/blackshark537/dataprod/src/app/core"
-	"github.com/blackshark537/dataprod/src/app/infraestructure/database"
-	"github.com/blackshark537/dataprod/src/env"
+	api "github.com/blackshark537/abuelos/src/app/Api"
+	CommandLine "github.com/blackshark537/abuelos/src/app/cli"
+	core "github.com/blackshark537/abuelos/src/app/core"
+	"github.com/blackshark537/abuelos/src/app/infraestructure/database"
+	"github.com/blackshark537/abuelos/src/env"
 )
 
 func main() {

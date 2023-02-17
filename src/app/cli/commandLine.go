@@ -6,8 +6,8 @@ import (
 	"runtime"
 	"time"
 
-	core_command "github.com/blackshark537/dataprod/src/app/core/command"
-	"github.com/blackshark537/dataprod/src/app/core/config"
+	core_command "github.com/blackshark537/abuelos/src/app/core/command"
+	"github.com/blackshark537/abuelos/src/app/core/config"
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 )

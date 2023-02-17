@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/blackshark537/dataprod/src/app/core/config"
-	"github.com/blackshark537/dataprod/src/app/core/entities"
+	"github.com/blackshark537/abuelos/src/app/core/config"
+	"github.com/blackshark537/abuelos/src/app/core/entities"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 )

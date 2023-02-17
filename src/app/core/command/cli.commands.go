@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/blackshark537/dataprod/src/app/core/entities"
-	portin "github.com/blackshark537/dataprod/src/app/core/port_in"
-	"github.com/blackshark537/dataprod/src/app/core/services"
+	"github.com/blackshark537/abuelos/src/app/core/entities"
+	portin "github.com/blackshark537/abuelos/src/app/core/port_in"
+	"github.com/blackshark537/abuelos/src/app/core/services"
 	"github.com/fatih/color"
 )
 
